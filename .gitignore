@@ -1,0 +1,6 @@
+params_dev.ini
+data/
+.idea/
+test/
+dev/
+logs/

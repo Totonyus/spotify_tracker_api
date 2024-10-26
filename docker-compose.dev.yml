@@ -1,0 +1,25 @@
+version: "3.1"
+services:
+  spotify_tracker_api:
+    container_name: spotify_tracker_api
+    image: spotify_tracker_api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - ./test/params:/app/params
+      - ./params/params_dev.ini:/app/params/params.ini
+      - ./test/logs:/app/logs
+      - ./test/data:/app/data
+      - ./spotify_tracker_api.py:/app/spotify_tracker_api.py
+      - ./spotify_api_helpers.py:/app/spotify_api_helpers.py
+      - ./params_utils.py:/app/params_utils.py
+      - ./templates/artists.html.j2:/app/templates/artists.html.j2
+      - ./templates/releases.html.j2:/app/templates/releases.html.j2
+      - ./entrypoint.sh:/app/entrypoint.sh
+    environment:
+      - LOG_LEVEL=trace
+#      - DEBUG=DEBUG

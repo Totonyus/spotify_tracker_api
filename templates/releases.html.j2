@@ -1,0 +1,106 @@
+<style>
+    a {
+        text-decoration: unset;
+        color: unset;
+    }
+
+    .header, .releases_number, .metadata {
+        display: block;
+        text-align: center;
+    }
+
+    .releases_number {
+        font-weight: bold;
+        font-size: large;
+    }
+
+    .album_row {
+        display: flex;
+    }
+
+    @media (max-width: 600px) {
+        .album_cover {
+            width: 50px;
+        }
+    }
+
+    @media (min-width: 600px) {
+        .album_cover {
+            width: 150px;
+        }
+    }
+
+    .album_cover_col {
+        margin-right: 20px;
+        align-self: center;
+    }
+
+    .album_info_col {
+        display: flex;
+        flex-direction: column;
+        align-self: center;
+    }
+
+    hr.dashed {
+        border-top: 3px dashed #bbb;
+    }
+
+    hr:last-child {
+        display: none;
+    }
+
+    .album_name {
+        font-weight: bold;
+        font-size: large;
+    }
+
+    .album_information {
+        color: dimgrey;
+    }
+
+    {% if app_params.get('search_url') == '' %}
+        .search_icon {
+            display: none;
+        }
+    {% endif %}
+</style>
+
+
+<span class="header">
+    <span class="releases_number">{{ releases | length }} releases (from {{ artists | length }} <a href="/artists">artists</a>)</span>
+    {% if status == None %}
+        <span class="metadata">Last scan : {{ metadata.last_execution }}</span>
+    {% else %}
+        <span class="metadata">Running scan : {{ status.get('current_artist') }} on {{ status.get('total_artists') }}</span>
+    {% endif %}
+</span>
+
+<span class="main_container">
+{% for release in releases | sort(attribute='added_date_timestamp') | reverse %}
+    <span class='album_row'>
+        <span class='album_cover_col'>
+            <a target="_blank" href="{{ release.external_urls.spotify }}">
+                <img alt="{{ release.name }}" class='album_cover' src='{{ release.images[1].url }}'/>
+            </a>
+        </span>
+        <span class='album_info_col'>
+            <span class='album_name'>
+                <a href="{{ release.external_urls.spotify }}"> {{ release .name }} </a>
+                <a target="_blank" class="search_icon"
+                   href="{{ app_params.get('search_url') | replace('{}', (release.name | urlencode) ) }}">🔎</a>
+            </span>
+            <span class='album_information'>{{ release.release_date }} - {{ release.album_type }} ({{ release.total_tracks }}🎵)</span>
+            <span class='album_artists'>
+                {% for artist in release.artists %}
+                    <span class="artist">
+                        <a target="_blank" href="{{ artist.external_urls.spotify }}"> {{ artist.name }} </a>
+                        <a target="_blank" class="search_icon"
+                           href="{{ app_params.get('search_url') | replace('{}', (artist.name | urlencode) ) }}">🔎</a>
+                    </span>
+                {% endfor %}
+            </span>
+        </span>
+    </span>
+    <hr class="dashed"/>
+{% endfor %}
+</span>

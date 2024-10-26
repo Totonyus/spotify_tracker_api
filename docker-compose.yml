@@ -1,0 +1,14 @@
+version: "3.1"
+services:
+  spotify_tracker_api:
+    container_name: spotify_tracker_api
+    image: totonyus/spotify_tracker_api
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./params:/app/params
+      - ./logs:/app/logs
+      - ./data:/app/data
+    environment:
+      - LOG_LEVEL=info

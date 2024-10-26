@@ -1,0 +1,73 @@
+<style>
+    a {
+        text-decoration: unset;
+        color: unset;
+    }
+
+    .header, .artist_number, .metadata {
+        display: block;
+        text-align: center;
+    }
+
+    .artist_number {
+        font-weight: bold;
+        font-size: large;
+    }
+
+    .main_container {
+        display: flex;
+        flex-wrap: wrap;
+        place-content: space-evenly;
+    }
+
+    .artist_card {
+        display: flex;
+        flex-direction: column;
+        margin: 10px;
+        width: 150px;
+    }
+
+    .image_container {
+        display: inline-block;
+        align-content: center;
+        text-align: center;
+
+        height: 150px;
+        width: 150px;
+        margin-bottom: 5px;
+    }
+
+    .artist_image {
+        max-width: 150px;
+        max-height: 150px;
+    }
+
+    .artist_name {
+        text-align: center;
+    }
+
+    {% if app_params.get('search_url') == '' %}
+        .search_icon {
+            display: none;
+        }
+    {% endif %}
+</style>
+
+<span class="header">
+    <span class="artist_number">{{ artists | length }} artists</span>
+    <span class="metadata">Last scan : {{ metadata.last_execution }}</span>
+</span>
+
+<span class="main_container">
+{% for artist in artists | sort(attribute='name') %}
+    <span class="artist_card">
+        <a target="_blank" href="{{ artist.external_urls.spotify }}">
+            <span class="image_container">
+                <img class="artist_image" src="{{ artist.images[1].url }}" alt="{{ artist.name }}"/>
+            </span>
+        </a>
+    <span class="artist_name">{{ artist.name }} <a class="search_icon" target="_blank"
+                                                   href="{{ app_params.get('search_url') | replace('{}', (artist.name | urlencode) ) }}">🔎</a></span>
+    </span>
+{% endfor %}
+</span>

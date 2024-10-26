@@ -1,0 +1,6 @@
+tinydb
+fastapi
+uvicorn
+requests
+jinja2
+apscheduler
