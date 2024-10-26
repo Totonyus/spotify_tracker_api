@@ -21,5 +21,4 @@ services:
       - ./templates/releases.html.j2:/app/templates/releases.html.j2
       - ./entrypoint.sh:/app/entrypoint.sh
     environment:
-      - LOG_LEVEL=trace
-#      - DEBUG=DEBUG
+      - DEBUG=DEBUG
