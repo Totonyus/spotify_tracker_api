@@ -21,8 +21,13 @@
                 <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
     {% else %}
         {% if status == None %}
-            <span class="category_item"><span>Last scan : {{ metadata.last_execution }} </span> ➤
+            <span class="category_item {{ 'error' if outdated }}"><span>Last scan : {{ metadata.last_execution }} </span> ➤
                     <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
+
+            {% if metadata.last_execution_timestamp != metadata.last_successful_execution_timestamp %}
+                <span class="category_item {{ 'error' if outdated }}"><span>Last successful scan : {{ metadata.last_successful_execution }} </span> ➤
+                    <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
+            {% endif %}
         {% else %}
             <span class="category_item"><span>Running scan</span> ➤ <span>{{ status.get('current_artist') + status.get('current_show') }} on {{ status.get('total_artists') + status.get('total_shows') }}</span></span>
         {% endif %}

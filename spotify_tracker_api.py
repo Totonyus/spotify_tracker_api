@@ -156,22 +156,13 @@ def get_all_latest_releases(date=None):
 
 @app.get('/')
 async def landing_page(request: Request):
-    current_date = datetime.now()
-    last_scan = None
-
-    metadata = api.get_metadata()
-
-    if metadata is not None:
-        last_scan = datetime.fromtimestamp(metadata.get('last_execution_timestamp'))
-
     return templates.TemplateResponse(name="landing_page.html.j2", request=request,
                                       context={
-                                          'metadata': metadata,
+                                          'metadata': api.get_metadata(),
                                           'app_params': params.get_all(),
                                           'user': api.get_user_stored_token(refresh=False) is not None,
                                           'latest': get_all_latest_releases(date=None),
-                                          'status': api.get_analysis_status(),
-                                          'outdated': last_scan < (current_date - timedelta(days=3))
+                                          'status': api.get_analysis_status()
                                       })
 
 

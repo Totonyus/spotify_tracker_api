@@ -359,10 +359,14 @@ def get_metadata():
         return None
 
 
-def update_metadata(albums_results=None, episodes_results=None):
+def update_metadata(albums_results=[], episodes_results=[]):
     current_date = datetime.datetime.now()
 
-    last_successful_execution = get_metadata().get('last_successful_execution_timestamp')
+    last_metadata = get_metadata()
+    if last_metadata is not None:
+        last_successful_execution = last_metadata.get('last_successful_execution_timestamp')
+    else:
+        last_successful_execution = None
 
     if last_successful_execution is not None:
         last_successful_execution = datetime.datetime.fromtimestamp(last_successful_execution)
