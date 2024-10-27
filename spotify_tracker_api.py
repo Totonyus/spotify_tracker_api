@@ -35,12 +35,14 @@ async def auth(response: Response, background_tasks: BackgroundTasks, code, stat
     if query_result.status_code != 200:
         return RedirectResponse(api.get_authorization_code_url())
     else:
-        api.get_user_followed(type='artists')
-        api.get_user_followed(type='shows')
-
-        api.update_metadata()
-
-        background_tasks.add_task(api.perform_search)
+        try:
+            api.get_user_followed(type='artists')
+            api.get_user_followed(type='shows')
+            api.update_metadata()
+            background_tasks.add_task(api.perform_search)
+        except PermissionError as e:
+            logging.critical(e)
+            return RedirectResponse('/login')
 
     return RedirectResponse('/')
 
@@ -124,9 +126,13 @@ async def refresh(background_tasks: BackgroundTasks, request: Request):
     if api.get_user_stored_token() is None:
         return RedirectResponse('/login')
 
-    api.get_user_followed(type='artists')
-    api.get_user_followed(type='shows')
-    background_tasks.add_task(api.perform_search)
+    try:
+        api.get_user_followed(type='artists')
+        api.get_user_followed(type='shows')
+        background_tasks.add_task(api.perform_search)
+    except PermissionError as e:
+        logging.critical(e)
+        return RedirectResponse('/login')
 
     referer = request.headers.get('referer')
 

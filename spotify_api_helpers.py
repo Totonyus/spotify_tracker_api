@@ -125,6 +125,9 @@ def refresh_access_token():
     else:
         logging.error(f'access_token refresh query failed - {refresh_query.status_code} - {refresh_query.text}')
 
+    if refresh_query.status_code == 400:
+        raise PermissionError(f'{refresh_query.status_code} - {refresh_query.text}')
+
     return refresh_query
 
 
