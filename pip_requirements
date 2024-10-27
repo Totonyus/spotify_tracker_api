@@ -5,3 +5,4 @@ requests
 jinja2
 apscheduler
 watchfiles
+rfeed

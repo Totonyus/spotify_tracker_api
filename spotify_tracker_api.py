@@ -1,18 +1,16 @@
-from datetime import datetime
-from logging import handlers
-
 import uvicorn
 from fastapi import FastAPI, Response, Request, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-import params_utils
 import spotify_api_helpers as api
 from fastapi import FastAPI
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+
+import rss_feed_generator
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -167,11 +165,12 @@ async def landing_page(request: Request):
                                           'status': api.get_analysis_status()}
                                       )
 
-
 if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     trigger = CronTrigger.from_crontab(params.get('cron'))
     scheduler.add_job(api.perform_search, trigger)
     scheduler.start()
+
+    rss_feed_generator.generate_feed()
 
     uvicorn.run(app, port=params.get('listen_port'), host=params.get('listen_host'))

@@ -8,6 +8,7 @@ import requests
 from requests import Request
 from tinydb import TinyDB, Query
 
+import rss_feed_generator
 import params_utils
 
 db_root_users = TinyDB('data/database_users.json')
@@ -202,7 +203,7 @@ def get_show_episodes(show, retry_count=0):
     if stored_user_token is None:
         return None
 
-    request_url = f'https://api.spotify.com/v1/shows/{show.get('show').get('id')}/episodes'
+    request_url = f'https://api.spotify.com/v1/shows/{show.get("show").get("id")}/episodes'
     request_headers = {
         'Authorization': f'Bearer {stored_user_token.get("access_token")}'
     }
@@ -216,7 +217,7 @@ def get_show_episodes(show, retry_count=0):
         get_show_episodes(show=show, retry_count=retry_count + 1)
     else:
         logging.error(
-            f'{show.get('show').get("name")} ({show.get('show').get("id")}) episodes query failed - {request_response.status_code} - {request_response.text}')
+            f'{show.get("show").get("name")} ({show.get("show").get("id")}) episodes query failed - {request_response.status_code} - {request_response.text}')
 
 
 def save_releases_to_database(items, element=None, type='releases'):
@@ -325,6 +326,8 @@ def perform_search(artists=None, shows=None):
     remove_outdated_releases_from_db()
     current_analysis_status = None
     update_metadata()
+
+    rss_feed_generator.generate_feed()
 
 
 def get_artists():
