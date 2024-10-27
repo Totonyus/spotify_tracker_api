@@ -2,7 +2,7 @@
 <head>
     <title>Spotify Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
-    <link rel="icon" type="image/png" href="/static/favicon.ico" />
+    <link rel="icon" type="image/png" href="/static/favicon.ico"/>
 </head>
 
 <body>
@@ -68,8 +68,20 @@
     <span class="category">
     <span class="category_title">Other</span>
         <span class="category_item"> <span>rss feed</span> ➤ <span><a class="api_link_reference"
-                                                                            href="/static/feed">/static/feed</a> </span></span>
+                                                                      href="/static/feed">/static/feed</a> </span></span>
     </span>
+
+    {% if ( metadata.albums_errors | length > 0) or (metadata.episodes_errors | length > 0) %}
+        <span class="category">
+    <span class="category_title error">ERRORS</span>
+            {% for error in metadata.albums_errors %}
+                <span class="category_item"><span>{{ error.get('artist_name') }} ({{ error.get('artist_id') }})</span> ➤ <span>{{ error.get('status_code') }} - {{ error.get('message') }}</span></span>
+            {% endfor %}
+            {% for error in metadata.episodes_errors %}
+                <span class="category_item"><span>{{ error.get('show_name') }} ({{ error.get('show_id') }})</span> ➤ <span>{{ error.get('status_code') }} - {{ error.get('message') }}</span></span>
+            {% endfor %}
+    </span>
+    {% endif %}
 
 </span>
 </body>

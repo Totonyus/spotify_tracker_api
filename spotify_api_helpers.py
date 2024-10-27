@@ -172,7 +172,7 @@ def get_user_followed(url=None, followed=[], retry_count=0, type='artists'):
         logging.error(f'Followed {type} request failed - {request.status_code} - {request.text}')
 
 
-def get_artist_albums(artist, retry_count=0):
+def get_artist_albums(artist, retry_count=0, success=True):
     stored_user_token = get_user_stored_token()
 
     if stored_user_token is None:
@@ -188,22 +188,27 @@ def get_artist_albums(artist, retry_count=0):
     request_response = requests.get(request_url, headers=request_headers)
 
     if request_response.status_code == 200:
+        success = True
         save_releases_to_database(request_response.json().get('items'), element=artist, type='releases')
     elif request_response.status_code == 401 and retry_count < 5:
+        success = False
         refresh_access_token()
-        get_artist_albums(artist=artist, retry_count=retry_count + 1)
+        get_artist_albums(artist=artist, retry_count=retry_count + 1, success=success)
     else:
+        success = False
         logging.error(
             f'{artist.get("name")} ({artist.get("id")}) albums query failed - {request_response.status_code} - {request_response.text}')
 
+    return success, artist, request_response
 
-def get_show_episodes(show, retry_count=0):
+
+def get_show_episodes(show, retry_count=0, success=True):
     stored_user_token = get_user_stored_token()
 
     if stored_user_token is None:
         return None
 
-    request_url = f'https://api.spotify.com/v1/shows/{show.get("show").get("id")}/episodes'
+    request_url = f'https://api.spotify.com/v1/shows/{show.get("show").get("id")}/episodes?limit={params.get("albums_request_limit")}'
     request_headers = {
         'Authorization': f'Bearer {stored_user_token.get("access_token")}'
     }
@@ -211,13 +216,18 @@ def get_show_episodes(show, retry_count=0):
     request_response = requests.get(request_url, headers=request_headers)
 
     if request_response.status_code == 200:
+        success = True
         save_releases_to_database(request_response.json().get('items'), element=show, type='episodes')
     elif request_response.status_code == 401 and retry_count < 5:
+        success = False
         refresh_access_token()
-        get_show_episodes(show=show, retry_count=retry_count + 1)
+        get_show_episodes(show=show, retry_count=retry_count + 1, success=success)
     else:
+        success = False
         logging.error(
             f'{show.get("show").get("name")} ({show.get("show").get("id")}) episodes query failed - {request_response.status_code} - {request_response.text}')
+
+    return success, show, request_response
 
 
 def save_releases_to_database(items, element=None, type='releases'):
@@ -253,7 +263,7 @@ def save_releases_to_database(items, element=None, type='releases'):
             q = Query()
 
             if not db.search(q.id == item.get('id')):
-                if type == 'releases' :
+                if type == 'releases':
                     logging.info(
                         f'{type} : {element.get("name")} ({element.get("id")}) : {item.get("release_date")} - {item.get("total_tracks")} tracks - ({item.get("id")}) {item.get("name")}')
                 elif type == 'episodes':
@@ -307,12 +317,16 @@ def perform_search(artists=None, shows=None):
         'total_shows': total_shows
     }
 
+    albums_results = []
+    episodes_results = []
+
     for artist in artists:
         current_analysis_status['current_artist'] = current_artist
         current_analysis_status['total_artists'] = total_artists
 
         current_artist = current_artist + 1
-        get_artist_albums(artist)
+        albums_results.append(get_artist_albums(artist))
+
         time.sleep(params.get('delay'))
 
     for show in shows:
@@ -320,12 +334,12 @@ def perform_search(artists=None, shows=None):
         current_analysis_status['total_shows'] = total_shows
 
         current_show = current_show + 1
-        get_show_episodes(show)
+        episodes_results.append(get_show_episodes(show))
         time.sleep(params.get('delay'))
 
     remove_outdated_releases_from_db()
     current_analysis_status = None
-    update_metadata()
+    update_metadata(albums_results=albums_results, episodes_results=episodes_results)
 
     rss_feed_generator.generate_feed()
 
@@ -345,18 +359,45 @@ def get_metadata():
         return None
 
 
-def update_metadata():
+def update_metadata(albums_results=None, episodes_results=None):
     current_date = datetime.datetime.now()
 
     db_root_metadata.drop_table('metadata')
 
+    albums_errors = []
+    episodes_errors = []
+
+    for result in albums_results:
+        (status, item, response) = result
+
+        if not status:
+            albums_errors.append({
+                'status_code' : response.status_code,
+                'message' : response.text,
+                'artist_name' : item.get('name'),
+                'artist_id' : item.get('id'),
+            })
+
+    for result in episodes_results:
+        (status, item, response) = result
+
+        if not status:
+            episodes_errors.append({
+                'status_code' : response.status_code,
+                'message' : response.text,
+                'show_name' : item.get('show').get('name'),
+                'show_id' : item.get('show').get('id'),
+            })
+
     metadata_object = {
         'last_execution_timestamp': current_date.timestamp(),
         'last_execution': current_date.strftime('%Y-%m-%d - %H:%M'),
-        'nb_artists' : len(get_artists()),
-        'nb_releases' : len(get_releases()),
-        'nb_shows' : len(get_shows()),
-        'nb_episodes' : len(get_episodes()),
+        'nb_artists': len(get_artists()),
+        'nb_releases': len(get_releases()),
+        'nb_shows': len(get_shows()),
+        'nb_episodes': len(get_episodes()),
+        'albums_errors' : albums_errors,
+        'episodes_errors' : episodes_errors
     }
     db_metadata.insert(metadata_object)
 
@@ -388,6 +429,7 @@ def get_databases():
 
 def get_shows():
     return db_shows.all()
+
 
 def get_episodes():
     return db_episodes.all()
