@@ -19,7 +19,8 @@ default_params = {
     'newer_than': 30,
     'include_groups': ['album', 'single', 'compilation', 'appears_on'],
 
-    'search_url': '',
+    'search_url_music': '',
+    'search_url_shows': '',
 
     'cron' : '0 1 * * *'
 }

@@ -25,7 +25,7 @@ python3 spotify_tracker_api.py
 
 # Configuration
 ## Add application secret_id
-There are a few parameters that are set in [the parameters file](https://github.com/Totonyus/ydl_api_ng/blob/main/params/params.ini)
+There are a few parameters that are set in [the parameters file](https://github.com/Totonyus/spotify_tracker_api/blob/main/params/params.ini)
 
 The application won't start if `client_id`, `secret_id` or `application_url` are not provided.
 
@@ -45,6 +45,11 @@ When completed, you will be able to see the latest releases of your artists (sor
 ![releases_pages.png](screenshots%2Freleases_pages.png)
 
 # API endpoints
+## GET /
+The landing page of the application 
+
+![landing_page.png](screenshots%2Flanding_page.png)
+
 ## GET /login
 Simple redirects on spotify login page to allow application
 
@@ -66,6 +71,22 @@ The latest releases of your artists in json
 The lates releases of your artists but with UI
 
 ![releases_pages.png](screenshots%2Freleases_pages.png)
+
+## GET /api/shows
+The shows you follow in json
+
+## GET /shows
+The shows you follow but with UI
+
+![shows_page.png](screenshots%2Fshows_page.png)
+
+## GET /api/episodes
+The latest episodes of your shows in json
+
+## GET /episodes
+The latest episodes of your shows but with UI
+
+![episodes_pages.png](screenshots%2Fepisodes_page.png)
 
 ## GET /refresh
 Launch a new analysis to find the latest releases. The endpoint will simply ignore requests an analysis is already running.

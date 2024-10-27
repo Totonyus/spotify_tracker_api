@@ -3,7 +3,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 
     <style>
-        {% if app_params.get('search_url_music') == '' %}
+        {% if app_params.get('search_url_shows') == '' %}
             .search_icon {
                 display: none;
             }
@@ -13,7 +13,7 @@
 
 <body>
 <span class="header">
-    <span class="category_number">{{ artists | length }} artists</span>
+    <span class="category_number">{{ shows | length }} shows</span>
     {% if metadata == None %}
         <span class="category_item warning"><span>No analysis performed yet</span> ➤
                 <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
@@ -29,20 +29,20 @@
 
 <span class="artists_main_container">
 {% if reverse_sort %}
-    {% set artists = artists | sort(attribute=sort_by) | reverse %}
+    {% set shows = shows | sort(attribute=sort_by) | reverse %}
 {% else %}
-    {% set artists = artists | sort(attribute=sort_by) %}
+    {% set shows = shows | sort(attribute=sort_by) %}
 {% endif %}
 
-{% for artist in artists %}
+{% for show in shows %}
     <span class="artist_card">
-        <a target="_blank" href="{{ artist.external_urls.spotify }}">
+        <a target="_blank" href="{{ show.show.external_urls.spotify }}">
             <span class="image_container">
-                <img class="artist_image" src="{{ artist.images[1].url }}" alt="{{ artist.name }}"/>
+                <img class="artist_image" src="{{ show.show.images[1].url }}" alt="{{ show.show.name }}"/>
             </span>
         </a>
-    <span class="artist_name">{{ artist.name }} <a class="search_icon" target="_blank"
-                                                   href="{{ app_params.get('search_url_music') | replace('{}', (artist.name | urlencode) ) }}">🔎</a></span>
+    <span class="artist_name">{{ show.show.name }} <a class="search_icon" target="_blank"
+                                                      href="{{ app_params.get('search_url_shows') | replace('{}', (show.show.name | urlencode) ) }}">🔎</a></span>
     </span>
 {% endfor %}
 </span>

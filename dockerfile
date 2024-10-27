@@ -12,6 +12,7 @@ COPY --chmod=755 entrypoint.sh ./
 COPY *.py pip_requirements ./
 COPY params/params.ini ./setup/
 COPY templates/* ./templates/
+COPY static/* ./static/
 
 RUN pip3 install --disable-pip-version-check -q --root-user-action=ignore -r pip_requirements
 

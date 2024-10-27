@@ -1,0 +1,67 @@
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+
+<body>
+<span class="landing_page_main_container">
+    <span class="category">
+    <span class="category_title">Music</span>
+        <span class="category_item"> <span>{{ metadata.nb_artists | default(0) }} artists followed </span>
+            ➤ <span><a class="api_link_reference" href="/artists">/artists</a> </span></span>
+    <span class="category_item">
+        <span>{{ metadata.nb_releases | default(0) }} new releases during the last {{ app_params.get('newer_than') }} days ({{ latest.releases | length }} today) </span>
+        ➤ <span><a class="api_link_reference" href="/releases">/releases</a> </span></span>
+    </span>
+
+    <span class="category">
+    <span class="category_title">Podcasts</span>
+    <span class="category_item">
+        <span>{{ metadata.nb_shows | default(0) }} shows followed </span>
+        ➤ <span><a class="api_link_reference" href="/shows">/shows</a> </span></span>
+    <span class="category_item">
+        <span>{{ metadata.nb_episodes | default(0) }} new episodes during the last {{ app_params.get('newer_than') }} days ({{ latest.episodes | length }} today)</span>
+        ➤ <span><a class="api_link_reference" href="/episodes">/episodes</a> </span></span>
+    </span>
+
+    <span class="category">
+    <span class="category_title">Application</span>
+        {% if user == false %}
+            <span class="category_item error"><span>No user connected</span> ➤
+                <span><a class="api_link_reference" href="/login">/login</a></span></span>
+        {% else %}
+            <span class="category_item"><span>A problem with this application ? </span> ➤
+                <span>try to <a class="api_link_reference" href="/login">/login</a> again</span></span>
+        {% endif %}
+
+        {% if metadata == None %}
+            <span class="category_item warning"><span>No analysis performed yet</span> ➤
+                <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
+        {% else %}
+            {% if status == None %}
+                <span class="category_item"><span>Last scan : {{ metadata.last_execution }} </span> ➤
+                    <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
+            {% else %}
+                <span class="category_item"><span>Running scan</span> ➤ <span>{{ status.get('current_artist') + status.get('current_show') }} on {{ status.get('total_artists') + status.get('total_shows') }}</span></span>
+            {% endif %}
+        {% endif %}
+
+        <span class="category_item"><span>Need help ? </span>➤
+            <span><a class="api_link_reference" href="https://github.com/Totonyus/spotify_tracker_api">github</a></span></span>
+    </span>
+
+    <span class="category">
+    <span class="category_title">API</span>
+        <span class="category_item"> <span>artists (json)</span> ➤ <span><a class="api_link_reference"
+                                                                            href="/api/artists">/api/artists</a> </span></span>
+        <span class="category_item"> <span>releases (json)</span> ➤ <span><a class="api_link_reference"
+                                                                             href="/api/releases">/api/releases</a> </span></span>
+        <span class="category_item"> <span>shows (json)</span> ➤ <span><a class="api_link_reference" href="/api/shows">/api/shows</a> </span></span>
+        <span class="category_item"> <span>episodes (json)</span> ➤ <span><a class="api_link_reference"
+                                                                             href="/api/episodes">/api/episodes</a> </span></span>
+        <span class="category_item"> <span>latest (json)</span> ➤ <span><a class="api_link_reference"
+                                                                           href="/api/latest">/api/latest</a> </span></span>
+    </span>
+</span>
+</body>
+</html>

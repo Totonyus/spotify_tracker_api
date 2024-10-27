@@ -1,0 +1,60 @@
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+
+    <style>
+        {% if app_params.get('search_url_shows') == '' %}
+            .search_icon {
+                display: none;
+            }
+        {% endif %}
+    </style>
+</head>
+
+<body>
+<span class="header">
+    <span class="category_number">{{ episodes | length }} episodes (from {{ shows | length }} <a class="api_link_reference" href="/shows">/shows</a>)</span>
+    {% if metadata == None %}
+        <span class="category_item warning"><span>No analysis performed yet</span> ➤
+                <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
+    {% else %}
+        {% if status == None %}
+            <span class="category_item"><span>Last scan : {{ metadata.last_execution }} </span> ➤
+                    <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
+        {% else %}
+            <span class="category_item"><span>Running scan</span> ➤ <span>{{ status.get('current_artist') + status.get('current_show') }} on {{ status.get('total_artists') + status.get('total_shows') }}</span></span>
+        {% endif %}
+    {% endif %}
+</span>
+
+<span class="main_container">
+{% if reverse_sort %}
+    {% set episodes = episodes | sort(attribute=sort_by) | reverse %}
+{% else %}
+    {% set episodes = episodes | sort(attribute=sort_by) %}
+{% endif %}
+
+{% for episode in episodes %}
+    <span class='album_row'>
+        <span class='album_cover_col'>
+            <a target="_blank" href="{{ episode.external_urls.spotify }}">
+                <img alt="{{ episode.name }}" class='album_cover' src='{{ episode.images[1].url }}'/>
+            </a>
+        </span>
+        <span class='album_info_col'>
+            <span class='album_name'>
+                <a href="{{ episode.external_urls.spotify }}"> {{ episode .name }} </a>
+                <a target="_blank" class="search_icon"
+                   href="{{ app_params.get('search_url_music') | replace('{}', (episode.name | urlencode) ) }}">🔎</a>
+            </span>
+            <span class='album_information'>{{ episode.release_date }} (▶ {{ (episode.duration_ms / 1000 / 60) | round() | int }} minutes)</span>
+            <span class='album_artists'>
+                {{ episode.description }}
+            </span>
+        </span>
+    </span>
+    <hr class="dashed"/>
+{% endfor %}
+</span>
+</body>
+</html>

@@ -19,6 +19,11 @@ services:
       - ./params_utils.py:/app/params_utils.py
       - ./templates/artists.html.j2:/app/templates/artists.html.j2
       - ./templates/releases.html.j2:/app/templates/releases.html.j2
+      - ./templates/shows.html.j2:/app/templates/shows.html.j2
+      - ./templates/episodes.html.j2:/app/templates/episodes.html.j2
+      - ./templates/landing_page.html.j2:/app/templates/landing_page.html.j2
+      - ./static/style.css:/app/static/style.css
       - ./entrypoint.sh:/app/entrypoint.sh
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - DEBUG=DEBUG

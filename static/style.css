@@ -1,0 +1,163 @@
+.landing_page_main_container {
+    display: flex;
+    flex-direction: column;
+}
+
+.category {
+    display: block;
+    margin-bottom: 30px;
+}
+
+.category_title {
+    display: block;
+    font-weight: bold;
+    font-size: larger;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.category_item_solo {
+    display: block;
+    text-align: center;
+}
+
+.warning {
+    font-weight: bold;
+    color: orange;
+}
+
+.error {
+    font-weight: bold;
+    color: red;
+}
+
+.header, .metadata {
+    display: block;
+    text-align: center;
+}
+
+.metadata{
+    margin-bottom: 10px;
+}
+
+.category_number {
+    font-weight: bold;
+    font-size: large;
+}
+
+.artists_main_container {
+    display: flex;
+    flex-wrap: wrap;
+    place-content: space-evenly;
+}
+
+.artist_card {
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+    width: 150px;
+}
+
+.image_container {
+    display: inline-block;
+    align-content: center;
+    text-align: center;
+
+    height: 150px;
+    width: 150px;
+    margin-bottom: 5px;
+}
+
+.artist_image {
+    max-width: 150px;
+    max-height: 150px;
+}
+
+.artist_name {
+    text-align: center;
+}
+
+a {
+    text-decoration: unset;
+    color: unset;
+}
+
+.header, .releases_number, .metadata {
+    display: block;
+    text-align: center;
+}
+
+.releases_number {
+    font-weight: bold;
+    font-size: large;
+}
+
+.album_row {
+    display: flex;
+}
+
+@media (max-width: 600px) {
+    .album_cover {
+        width: 50px;
+    }
+}
+
+@media (min-width: 600px) {
+    .album_cover {
+        width: 150px;
+    }
+}
+
+.album_cover_col {
+    margin-right: 20px;
+    align-self: center;
+}
+
+.album_info_col {
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+}
+
+hr.dashed {
+    border-top: 3px dashed #bbb;
+}
+
+hr:last-child {
+    display: none;
+}
+
+.album_name {
+    font-weight: bold;
+    font-size: large;
+}
+
+.album_information {
+    color: dimgrey;
+}
+
+.api_link_reference{
+    color: deeppink;
+    font-weight: bold;
+    font-family: monospace;
+    font-size: large;
+}
+
+
+.category_item {
+    display: flex;
+}
+
+.category_item span {
+    flex: 1;
+}
+
+.category_item span:first-of-type {
+    text-align: right;
+    padding-right: 5px;
+}
+
+.category_item span:last-of-type {
+    text-align: left;
+    padding-left: 5px;
+}

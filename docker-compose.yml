@@ -10,3 +10,4 @@ services:
       - ./params:/app/params
       - ./logs:/app/logs
       - ./data:/app/data
+      - /etc/localtime:/etc/localtime:ro
