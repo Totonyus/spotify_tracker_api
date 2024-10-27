@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 import spotify_api_helpers as api
 from fastapi import FastAPI
-from datetime import datetime
+from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -156,14 +156,24 @@ def get_all_latest_releases(date=None):
 
 @app.get('/')
 async def landing_page(request: Request):
+    current_date = datetime.now()
+    last_scan = None
+
+    metadata = api.get_metadata()
+
+    if metadata is not None:
+        last_scan = datetime.fromtimestamp(metadata.get('last_execution_timestamp'))
+
     return templates.TemplateResponse(name="landing_page.html.j2", request=request,
                                       context={
-                                          'metadata': api.get_metadata(),
+                                          'metadata': metadata,
                                           'app_params': params.get_all(),
                                           'user': api.get_user_stored_token(refresh=False) is not None,
                                           'latest': get_all_latest_releases(date=None),
-                                          'status': api.get_analysis_status()}
-                                      )
+                                          'status': api.get_analysis_status(),
+                                          'outdated': last_scan < (current_date - timedelta(days=3))
+                                      })
+
 
 if __name__ == '__main__':
     scheduler = BackgroundScheduler()

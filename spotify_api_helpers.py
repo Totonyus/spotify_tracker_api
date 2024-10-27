@@ -362,6 +362,11 @@ def get_metadata():
 def update_metadata(albums_results=None, episodes_results=None):
     current_date = datetime.datetime.now()
 
+    last_successful_execution = get_metadata().get('last_successful_execution_timestamp')
+
+    if last_successful_execution is not None:
+        last_successful_execution = datetime.datetime.fromtimestamp(last_successful_execution)
+
     db_root_metadata.drop_table('metadata')
 
     albums_errors = []
@@ -389,9 +394,16 @@ def update_metadata(albums_results=None, episodes_results=None):
                 'show_id' : item.get('show').get('id'),
             })
 
+    if len(episodes_errors) == 0 and len(albums_errors) == 0:
+        last_successful_execution = current_date
+    else:
+        last_successful_execution = last_successful_execution
+
     metadata_object = {
         'last_execution_timestamp': current_date.timestamp(),
         'last_execution': current_date.strftime('%Y-%m-%d - %H:%M'),
+        'last_successful_execution_timestamp' : last_successful_execution.timestamp(),
+        'last_successful_execution' : last_successful_execution.strftime('%Y-%m-%d - %H:%M'),
         'nb_artists': len(get_artists()),
         'nb_releases': len(get_releases()),
         'nb_shows': len(get_shows()),
