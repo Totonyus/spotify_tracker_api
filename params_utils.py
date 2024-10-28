@@ -14,7 +14,6 @@ default_params = {
     'log_level': 'INFO',
     'logs_rotation': 7,
 
-    'albums_request_limit': 5,
     'delay': 1,
     'newer_than': 30,
     'include_groups': ['album', 'single', 'compilation', 'appears_on'],
@@ -26,7 +25,7 @@ default_params = {
 }
 
 params_metadata = {
-    'int': ['newer_than', 'delay', 'listen_port', 'albums_request_limit', 'logs_rotation'],
+    'int': ['newer_than', 'delay', 'listen_port', 'logs_rotation'],
     'array': ['include_groups'],
     'cannot_be_none': ['client_id', 'client_secret', 'application_url']
 }

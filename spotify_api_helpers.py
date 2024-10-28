@@ -52,17 +52,19 @@ def get_user_stored_token(refresh=True):
         found = db_users.all()[0]
     except:
         logging.error(
-            f'Unable to retrieve user in database, please connect you spotify account here : {params.get("application_url")}/login')
+            f'Unable to retrieve user in database, please connect your spotify account here : {params.get("application_url")}/login')
         return None
 
     if found is None:
-        logging.error(f'No user found, please connect you spotify account here : {params.get("application_url")}/login')
+        logging.error(
+            f'No user found, please connect your spotify account here : {params.get("application_url")}/login')
         return None
     else:
         current_date = datetime.datetime.now()
 
         if found.get('expires_on') < current_date.timestamp() and refresh is True:
-            logging.info(f'Stored user access_token expired on { datetime.datetime.fromtimestamp(found.get("expires_on")) }, requesting a new one')
+            logging.info(
+                f'Stored user access_token expired on {datetime.datetime.fromtimestamp(found.get("expires_on"))}, requesting a new one')
             refresh_access_token()
             return get_user_stored_token()
 
@@ -93,7 +95,7 @@ def request_access_token(code):
         logging.info(f'New token expires on {expires_on}')
         db_users.insert(user_object)
 
-    elif auth_query.status_code in [400,429]:
+    elif auth_query.status_code in [400, 429]:
         raise PermissionError(f'{auth_query.status_code} - {auth_query.text}')
     else:
         logging.error(f'access_token request query failed - {auth_query.status_code} - {auth_query.text}')
@@ -125,7 +127,7 @@ def refresh_access_token():
         logging.info(f'New token expires on {expires_on}')
         db_users.update(user_object, doc_ids=[1])
 
-    elif refresh_query.status_code in [400,429]:
+    elif refresh_query.status_code in [400, 429]:
         raise PermissionError(f'{refresh_query.status_code} - {refresh_query.text}')
     else:
         logging.error(f'access_token refresh query failed - {refresh_query.status_code} - {refresh_query.text}')
@@ -133,117 +135,113 @@ def refresh_access_token():
     return refresh_query
 
 
-def get_user_followed(url=None, followed=[], retry_count=0, type='artists'):
-    stored_user_token = get_user_stored_token()
+def artists_api_call_handler(request):
+    response = request.json().get('artists')
+    new_items = response.get('items')
 
-    if stored_user_token is None:
-        return None
-
-    if url is None and type == 'artists':
-        url = 'https://api.spotify.com/v1/me/following?type=artist&limit=50'
-    elif url is None and type == 'shows':
-        url = 'https://api.spotify.com/v1/me/shows?limit=50'
-
-    db_root, db = get_databases().get(type)
-
-    request = requests.get(url=url, headers={
-        'Authorization': f'Bearer {stored_user_token.get("access_token")}'
-    })
-
-    if request.status_code == 200:
-        if type == 'artists':
-            response = request.json().get('artists')
-            new_items = response.get('items')
-        elif type == 'shows':
-            response = request.json()
-            new_items = response.get('items')
-
-            for item in new_items:
-                del item.get('show')['available_markets']
-
-        followed = followed + new_items
-        logging.info(f'{len(new_items)} {type} added to the list')
-
-        if response.get('next') is not None:
-            get_user_followed(response.get('next'), followed=followed)
-        else:
-            db_root.drop_table(type)
-            db.insert_multiple(followed)
-            return followed
-    elif request.status_code == 401 and retry_count < 5:
-        logging.warn(f'Followed {type} request failed - {request.status_code} - {request.text}')
-
-        refresh_access_token()
-        get_user_followed(url=url, followed=followed, retry_count=retry_count + 1)
-    else:
-        logging.error(f'Followed {type} request failed - {request.status_code} - {request.text}')
+    return response, new_items
 
 
-def get_artist_albums(artist, retry_count=0, success=True):
+def shows_api_call_handler(request):
+    response = request.json()
+    new_items = response.get('items')
+
+    for item in new_items:
+        del item.get('show')['available_markets']
+
+    return response, new_items
+
+
+def releases_api_call_handler(request):
+    response = request.json()
+    new_items = response.get('items')
+
+    return response, new_items
+
+
+def get_from_api(type, url=None, items_retrieved=[], retry_count=0, item=None):
     stored_user_token = get_user_stored_token()
 
     if stored_user_token is None:
         return None
 
     include_groups = f'include_groups={"%2C".join(params.get("include_groups"))}&'
+    db_root, db = get_databases().get(type)
 
-    request_url = f'https://api.spotify.com/v1/artists/{artist.get("id")}/albums?{include_groups}limit={params.get("albums_request_limit")}'
-    request_headers = {
-        'Authorization': f'Bearer {stored_user_token.get("access_token")}'
+    config = {
+        'artists': {
+            'url': lambda x: 'https://api.spotify.com/v1/me/following?type=artist&limit=50',
+            'success_callback': artists_api_call_handler,
+            'drop': True,
+            'save_method': db.insert_multiple,
+            'save_method_args': {},
+            'running_log': lambda n, i=None, t=None: f'{len(n)}/{t} {type} added to the list',
+            'error_log': lambda i, r: f'Error while fetching {type} - {r.status_code} - {r.text}'
+        },
+        'shows': {
+            'url': lambda x: 'https://api.spotify.com/v1/me/shows?limit=50',
+            'success_callback': shows_api_call_handler,
+            'drop': True,
+            'save_method': db.insert_multiple,
+            'save_method_args': {},
+            'running_log': lambda n, i=None, t=None: f'{len(n)}/{t} {type} added to the list',
+            'error_log': lambda i, r: f'Error while fetching {type} - {r.status_code} - {r.text}'
+        },
+        'episodes': {
+            'url': lambda x: f'https://api.spotify.com/v1/shows/{x.get("show").get("id")}/episodes?limit=50',
+            'success_callback': releases_api_call_handler,
+            'drop': False,
+            'save_method': save_releases_to_database,
+            'save_method_args': {'type': type, 'element': item},
+            'running_log': lambda n, i,
+                                  t=None: f'{i.get("show").get("name")} ({i.get("show").get("id")}) : {len(n)}/{t} {type} added to the list',
+            'error_log': lambda i,
+                                r: f'Error while fetching {type} : {i.get("show").get("name")} ({i.get("show").get("id")}) - {r.status_code} - {r.text}'
+        },
+        'releases': {
+            'url': lambda x: f'https://api.spotify.com/v1/artists/{x.get("id")}/albums?{include_groups}&limit=50',
+            'success_callback': releases_api_call_handler,
+            'drop': False,
+            'save_method': save_releases_to_database,
+            'save_method_args': {'type': type, 'element': item},
+            'running_log': lambda n, i,
+                                  t=None: f'{i.get("name")} ({i.get("id")}) : {len(n)}/{t} {type} added to the list',
+            'error_log': lambda i,
+                                r: f'Error while fetching {type} : {i.get("name")} ({i.get("id")}) - {r.status_code} - {r.text}'
+        }
     }
 
-    request_response = requests.get(request_url, headers=request_headers)
+    if url is None:
+        url = config.get(type).get('url')(item)
 
-    if request_response.status_code == 200:
-        success = True
-        save_releases_to_database(request_response.json().get('items'), element=artist, type='releases')
-    elif request_response.status_code == 401 and retry_count < 5:
-        success = False
-        logging.warn(
-            f'{artist.get("name")} ({artist.get("id")}) albums query failed - {request_response.status_code} - {request_response.text}')
-
-        refresh_access_token()
-        get_artist_albums(artist=artist, retry_count=retry_count + 1, success=success)
-    else:
-        success = False
-        logging.error(
-            f'{artist.get("name")} ({artist.get("id")}) albums query failed - {request_response.status_code} - {request_response.text}')
-
-    return success, artist, request_response
-
-
-def get_show_episodes(show, retry_count=0, success=True):
-    stored_user_token = get_user_stored_token()
-
-    if stored_user_token is None:
-        return None
-
-    request_url = f'https://api.spotify.com/v1/shows/{show.get("show").get("id")}/episodes?limit={params.get("albums_request_limit")}'
-    request_headers = {
+    request = requests.get(url=url, headers={
         'Authorization': f'Bearer {stored_user_token.get("access_token")}'
-    }
+    })
 
-    request_response = requests.get(request_url, headers=request_headers)
+    if request.status_code == 200:
+        response, new_items = config.get(type).get('success_callback')(request)
 
-    if request_response.status_code == 200:
-        success = True
-        save_releases_to_database(request_response.json().get('items'), element=show, type='episodes')
-    elif request_response.status_code == 401 and retry_count < 5:
-        success = False
-        logging.warn(
-            f'{show.get("show").get("name")} ({show.get("show").get("id")}) episodes query failed - {request_response.status_code} - {request_response.text}')
+        items_retrieved = items_retrieved + new_items
+        logging.info(config.get(type).get('running_log')(n=items_retrieved, i=item, t=response.get('total')))
 
+        if response.get('next') is not None:
+            get_from_api(url=response.get('next'), items_retrieved=items_retrieved, type=type, item=item)
+        else:
+            if config.get(type).get('drop'):
+                db_root.drop_table(type)
+
+            config.get(type).get('save_method')(items_retrieved, **config.get(type).get('save_method_args'))
+
+            return items_retrieved
+
+    elif request.status_code == 401 and retry_count < 3:
         refresh_access_token()
-        get_show_episodes(show=show, retry_count=retry_count + 1, success=success)
+        get_from_api(url=url, items_retrieved=items_retrieved, retry_count=retry_count + 1, type=type, item=item)
     else:
-        success = False
-        logging.error(
-            f'{show.get("show").get("name")} ({show.get("show").get("id")}) episodes query failed - {request_response.status_code} - {request_response.text}')
-
-    return success, show, request_response
+        logging.error(logging.info(config.get(type).get('error_log')(i=item, r=request)))
 
 
-def save_releases_to_database(items, element=None, type='releases'):
+def save_releases_to_database(items, type, element=None):
     current_date = datetime.datetime.now()
     newer_than_date = current_date - timedelta(days=params.get('newer_than'))
 
@@ -338,7 +336,7 @@ def perform_search(artists=None, shows=None):
         current_analysis_status['total_artists'] = total_artists
 
         current_artist = current_artist + 1
-        albums_results.append(get_artist_albums(artist))
+        albums_results.append(get_from_api(type='releases', item=artist))
 
         time.sleep(params.get('delay'))
 
@@ -347,12 +345,12 @@ def perform_search(artists=None, shows=None):
         current_analysis_status['total_shows'] = total_shows
 
         current_show = current_show + 1
-        episodes_results.append(get_show_episodes(show))
+        episodes_results.append(get_from_api(type='episodes', item=show))
         time.sleep(params.get('delay'))
 
     remove_outdated_releases_from_db()
     current_analysis_status = None
-    update_metadata(albums_results=albums_results, episodes_results=episodes_results)
+    update_metadata()
 
     rss_feed_generator.generate_feed()
 
@@ -372,62 +370,19 @@ def get_metadata():
         return None
 
 
-def update_metadata(albums_results=[], episodes_results=[]):
+def update_metadata():
     current_date = datetime.datetime.now()
-
-    last_metadata = get_metadata()
-    if last_metadata is not None:
-        last_successful_execution = last_metadata.get('last_successful_execution_timestamp')
-    else:
-        last_successful_execution = None
-
-    if last_successful_execution is not None:
-        last_successful_execution = datetime.datetime.fromtimestamp(last_successful_execution)
-
     db_root_metadata.drop_table('metadata')
-
-    albums_errors = []
-    episodes_errors = []
-
-    for result in albums_results:
-        (status, item, response) = result
-
-        if not status:
-            albums_errors.append({
-                'status_code' : response.status_code,
-                'message' : response.text,
-                'artist_name' : item.get('name'),
-                'artist_id' : item.get('id'),
-            })
-
-    for result in episodes_results:
-        (status, item, response) = result
-
-        if not status:
-            episodes_errors.append({
-                'status_code' : response.status_code,
-                'message' : response.text,
-                'show_name' : item.get('show').get('name'),
-                'show_id' : item.get('show').get('id'),
-            })
-
-    if len(episodes_errors) == 0 and len(albums_errors) == 0:
-        last_successful_execution = current_date
-    else:
-        last_successful_execution = last_successful_execution
 
     metadata_object = {
         'last_execution_timestamp': current_date.timestamp(),
         'last_execution': current_date.strftime('%Y-%m-%d - %H:%M'),
-        'last_successful_execution_timestamp' : last_successful_execution.timestamp(),
-        'last_successful_execution' : last_successful_execution.strftime('%Y-%m-%d - %H:%M'),
         'nb_artists': len(get_artists()),
         'nb_releases': len(get_releases()),
         'nb_shows': len(get_shows()),
-        'nb_episodes': len(get_episodes()),
-        'albums_errors' : albums_errors,
-        'episodes_errors' : episodes_errors
+        'nb_episodes': len(get_episodes())
     }
+
     db_metadata.insert(metadata_object)
 
 

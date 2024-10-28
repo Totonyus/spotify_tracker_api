@@ -40,9 +40,11 @@ async def auth(response: Response, background_tasks: BackgroundTasks, code, stat
         return RedirectResponse(api.get_authorization_code_url())
     else:
         try:
-            api.get_user_followed(type='artists')
-            api.get_user_followed(type='shows')
+            api.get_from_api(type='artists')
+            api.get_from_api(type='shows')
+
             api.update_metadata()
+
             background_tasks.add_task(api.perform_search)
         except PermissionError as e:
             logging.critical(f'Cannot re-authenticate user : {e}')
@@ -131,8 +133,9 @@ async def refresh(background_tasks: BackgroundTasks, request: Request):
         if api.get_user_stored_token() is None:
             return RedirectResponse('/login')
 
-        api.get_user_followed(type='artists')
-        api.get_user_followed(type='shows')
+        api.get_from_api(type='artists')
+        api.get_from_api(type='shows')
+
         background_tasks.add_task(api.perform_search)
     except PermissionError as e:
         logging.critical(e)
@@ -152,8 +155,8 @@ async def refresh(background_tasks: BackgroundTasks, request: Request, response:
             response.status_code = 400
             return {'message' : 'no user logged'}
 
-        api.get_user_followed(type='artists')
-        api.get_user_followed(type='shows')
+        api.get_from_api(type='artists')
+        api.get_from_api(type='shows')
         background_tasks.add_task(api.perform_search)
     except PermissionError as e:
         logging.critical(e)
