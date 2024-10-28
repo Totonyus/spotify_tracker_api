@@ -32,17 +32,9 @@ The application won't start if `client_id`, `secret_id` or `application_url` are
 # Setup application
 Go on the url `http://localhost:8000/login`. You will be redirected on spotify login page and will be asked permission to use your account information.
 
-If everything is OK you'll be redirected on the page `http://localhost:8000/artists` that displays all the artists you follow.
+If everything is OK you'll be redirected on the page landing page.
 
-![artists_page.png](screenshots%2Fartists_page.png)
-
-To launch the first scan, simply go to this url http://localhost:8000/refresh
-
-You'll be redirected on this (still empty) page : http://localhost:8000/releases. Wait a few minutes to reload the page. A counter on top tells you the completion of the scanning process : "Running scan : 36 on 112"
-
-When completed, you will be able to see the latest releases of your artists (sorted by the date they were added in the database).
-
-![releases_pages.png](screenshots%2Freleases_pages.png)
+To launch the first scan, simply go to this url http://localhost:8000/refresh. A counter appears on the landing page : "Running scan : 36 on 112". Manually reload the page to get the progression.
 
 # API endpoints
 ## GET /
@@ -91,6 +83,9 @@ The latest episodes of your shows but with UI
 ## GET /refresh
 Launch a new analysis to find the latest releases. The endpoint will simply ignore requests an analysis is already running.
 
+## GET /api/refresh
+Same as `/refresh` but more adapted to api usage
+
 ## GET /api/latest
 Optional parameter : date (`YYYY-MM-DD`)
 
@@ -101,3 +96,6 @@ This endpoint is meant to have a simple way to get new releases in an exploitabl
 Example :
 - Launch a refresh at 01:00
 - Retrieve all today releases with this endpoint and send a notification
+
+## GET /static/feed
+The rss feed of all new album releases and new podcasts

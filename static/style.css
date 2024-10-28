@@ -1,3 +1,7 @@
+body {
+    font-family: monospace;
+}
+
 .landing_page_main_container {
     display: flex;
     flex-direction: column;
@@ -29,12 +33,17 @@
     color: red;
 }
 
+.fatal_error {
+    color: red;
+    font-size: x-large;
+}
+
 .header, .metadata {
     display: block;
     text-align: center;
 }
 
-.metadata{
+.metadata {
     margin-bottom: 10px;
 }
 
@@ -134,7 +143,7 @@ hr:last-child {
     color: dimgrey;
 }
 
-.api_link_reference{
+.api_link_reference {
     color: deeppink;
     font-weight: bold;
     font-family: monospace;

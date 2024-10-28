@@ -30,7 +30,11 @@ async def auth(response: Response, background_tasks: BackgroundTasks, code, stat
     if state is None:
         response.status_code = 400
 
-    query_result = api.request_access_token(code)
+    try:
+        query_result = api.request_access_token(code)
+    except PermissionError as e:
+        logging.critical(f'Cannot authenticate user : {e}')
+        return RedirectResponse('/?error_flag=true')
 
     if query_result.status_code != 200:
         return RedirectResponse(api.get_authorization_code_url())
@@ -41,7 +45,7 @@ async def auth(response: Response, background_tasks: BackgroundTasks, code, stat
             api.update_metadata()
             background_tasks.add_task(api.perform_search)
         except PermissionError as e:
-            logging.critical(e)
+            logging.critical(f'Cannot re-authenticate user : {e}')
             return RedirectResponse('/login')
 
     return RedirectResponse('/')
@@ -123,10 +127,10 @@ async def releases(request: Request, sort_by='release_date_timestamp', reverse_s
 
 @app.get('/refresh')
 async def refresh(background_tasks: BackgroundTasks, request: Request):
-    if api.get_user_stored_token() is None:
-        return RedirectResponse('/login')
-
     try:
+        if api.get_user_stored_token() is None:
+            return RedirectResponse('/login')
+
         api.get_user_followed(type='artists')
         api.get_user_followed(type='shows')
         background_tasks.add_task(api.perform_search)
@@ -141,6 +145,22 @@ async def refresh(background_tasks: BackgroundTasks, request: Request):
 
     return RedirectResponse(referer)
 
+@app.get('/api/refresh')
+async def refresh(background_tasks: BackgroundTasks, request: Request, response:Response):
+    try:
+        if api.get_user_stored_token() is None:
+            response.status_code = 400
+            return {'message' : 'no user logged'}
+
+        api.get_user_followed(type='artists')
+        api.get_user_followed(type='shows')
+        background_tasks.add_task(api.perform_search)
+    except PermissionError as e:
+        logging.critical(e)
+        response.status_code = 400
+        return {'message' : str(e)}
+
+    return None
 
 @app.get('/api/latest')
 async def from_fate(date=None):

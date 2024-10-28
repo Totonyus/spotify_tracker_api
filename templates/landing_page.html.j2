@@ -6,7 +6,16 @@
 </head>
 
 <body>
+
 <span class="landing_page_main_container">
+{% if request.query_params.get('error_flag') == 'true' %}
+    <span class="category">
+    <span class="category_title fatal_error">FATAL ERROR</span>
+        <span class="category_item fatal_error"> <span>Something went really bad</span>
+            ➤ <span>Please check server logs </span></span>
+    </span>
+{% endif %}
+
     <span class="category">
     <span class="category_title">Music</span>
         <span class="category_item"> <span>{{ metadata.nb_artists | default(0) }} artists followed </span>
@@ -59,6 +68,8 @@
 
     <span class="category">
     <span class="category_title">API</span>
+        <span class="category_item"> <span>refresh (json)</span> ➤ <span><a class="api_link_reference"
+                                                                            href="/api/refresh">/api/refresh</a> </span></span>
         <span class="category_item"> <span>artists (json)</span> ➤ <span><a class="api_link_reference"
                                                                             href="/api/artists">/api/artists</a> </span></span>
         <span class="category_item"> <span>releases (json)</span> ➤ <span><a class="api_link_reference"

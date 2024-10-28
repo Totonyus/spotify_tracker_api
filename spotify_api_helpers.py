@@ -62,7 +62,7 @@ def get_user_stored_token(refresh=True):
         current_date = datetime.datetime.now()
 
         if found.get('expires_on') < current_date.timestamp() and refresh is True:
-            logging.info(f'Stored user access_token expired on {current_date}, requesting a new one')
+            logging.info(f'Stored user access_token expired on { datetime.datetime.fromtimestamp(found.get("expires_on")) }, requesting a new one')
             refresh_access_token()
             return get_user_stored_token()
 
@@ -92,6 +92,9 @@ def request_access_token(code):
 
         logging.info(f'New token expires on {expires_on}')
         db_users.insert(user_object)
+
+    elif auth_query.status_code in [400,429]:
+        raise PermissionError(f'{auth_query.status_code} - {auth_query.text}')
     else:
         logging.error(f'access_token request query failed - {auth_query.status_code} - {auth_query.text}')
 
@@ -122,11 +125,10 @@ def refresh_access_token():
         logging.info(f'New token expires on {expires_on}')
         db_users.update(user_object, doc_ids=[1])
 
+    elif refresh_query.status_code in [400,429]:
+        raise PermissionError(f'{refresh_query.status_code} - {refresh_query.text}')
     else:
         logging.error(f'access_token refresh query failed - {refresh_query.status_code} - {refresh_query.text}')
-
-    if refresh_query.status_code == 400:
-        raise PermissionError(f'{refresh_query.status_code} - {refresh_query.text}')
 
     return refresh_query
 
@@ -169,6 +171,8 @@ def get_user_followed(url=None, followed=[], retry_count=0, type='artists'):
             db.insert_multiple(followed)
             return followed
     elif request.status_code == 401 and retry_count < 5:
+        logging.warn(f'Followed {type} request failed - {request.status_code} - {request.text}')
+
         refresh_access_token()
         get_user_followed(url=url, followed=followed, retry_count=retry_count + 1)
     else:
@@ -195,6 +199,9 @@ def get_artist_albums(artist, retry_count=0, success=True):
         save_releases_to_database(request_response.json().get('items'), element=artist, type='releases')
     elif request_response.status_code == 401 and retry_count < 5:
         success = False
+        logging.warn(
+            f'{artist.get("name")} ({artist.get("id")}) albums query failed - {request_response.status_code} - {request_response.text}')
+
         refresh_access_token()
         get_artist_albums(artist=artist, retry_count=retry_count + 1, success=success)
     else:
@@ -223,6 +230,9 @@ def get_show_episodes(show, retry_count=0, success=True):
         save_releases_to_database(request_response.json().get('items'), element=show, type='episodes')
     elif request_response.status_code == 401 and retry_count < 5:
         success = False
+        logging.warn(
+            f'{show.get("show").get("name")} ({show.get("show").get("id")}) episodes query failed - {request_response.status_code} - {request_response.text}')
+
         refresh_access_token()
         get_show_episodes(show=show, retry_count=retry_count + 1, success=success)
     else:
