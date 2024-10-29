@@ -135,13 +135,6 @@ def refresh_access_token():
     return refresh_query
 
 
-def artists_api_call_handler(request):
-    response = request.json().get('artists')
-    new_items = response.get('items')
-
-    return response, new_items
-
-
 def shows_api_call_handler(request):
     response = request.json()
     new_items = response.get('items')
@@ -152,138 +145,157 @@ def shows_api_call_handler(request):
     return response, new_items
 
 
-def releases_api_call_handler(request):
-    response = request.json()
-    new_items = response.get('items')
-
-    return response, new_items
-
-
-def get_from_api(type, url=None, items_retrieved=[], retry_count=0, item=None):
+def get_from_api(type, next_url=None, items_retrieved=[], retry_count=0, item=None):
     stored_user_token = get_user_stored_token()
 
     if stored_user_token is None:
         return None
 
-    include_groups = f'include_groups={"%2C".join(params.get("include_groups"))}&'
     db_root, db = get_databases().get(type)
 
     config = {
         'artists': {
-            'url': lambda x: 'https://api.spotify.com/v1/me/following?type=artist&limit=50',
-            'success_callback': artists_api_call_handler,
+            'url': lambda x: [('artists', 'https://api.spotify.com/v1/me/following?type=artist&limit=50')],
+            'success_callback': lambda x: (x.json().get('artists'), x.json().get('artists').get('items')),
             'drop': True,
             'save_method': db.insert_multiple,
-            'save_method_args': {},
-            'running_log': lambda n, i=None, t=None: f'{len(n)}/{t} {type} added to the list',
-            'error_log': lambda i, r: f'Error while fetching {type} - {r.status_code} - {r.text}'
+            'running_log': lambda n, g, i=None, t=None: f'{len(n)}/{t} {type} added to the list',
+            'error_log': lambda i, r: f'Error while fetching {type} - {r.status_code} - {r.text}',
+            'must_continue': lambda i: True
         },
         'shows': {
-            'url': lambda x: 'https://api.spotify.com/v1/me/shows?limit=50',
+            'url': lambda x: [('shows', 'https://api.spotify.com/v1/me/shows?limit=50')],
             'success_callback': shows_api_call_handler,
             'drop': True,
             'save_method': db.insert_multiple,
-            'save_method_args': {},
-            'running_log': lambda n, i=None, t=None: f'{len(n)}/{t} {type} added to the list',
-            'error_log': lambda i, r: f'Error while fetching {type} - {r.status_code} - {r.text}'
+            'running_log': lambda n, g, i=None, t=None: f'{len(n)}/{t} {type} added to the list',
+            'error_log': lambda i, r: f'Error while fetching {type} - {r.status_code} - {r.text}',
+            'must_continue': lambda i: True
         },
         'episodes': {
-            'url': lambda x: f'https://api.spotify.com/v1/shows/{x.get("show").get("id")}/episodes?limit=50',
-            'success_callback': releases_api_call_handler,
+            'url': lambda x: [
+                ('episode', f'https://api.spotify.com/v1/shows/{x.get("show").get("id")}/episodes?limit={params.get("albums_request_limit")}')],
+            'success_callback': lambda x: (x.json(), x.json().get('items')),
             'drop': False,
-            'save_method': save_releases_to_database,
-            'save_method_args': {'type': type, 'element': item},
-            'running_log': lambda n, i,
+            'save_method': None,
+            'running_log': lambda n, i, g,
                                   t=None: f'{i.get("show").get("name")} ({i.get("show").get("id")}) : {len(n)}/{t} {type} added to the list',
             'error_log': lambda i,
-                                r: f'Error while fetching {type} : {i.get("show").get("name")} ({i.get("show").get("id")}) - {r.status_code} - {r.text}'
+                                r: f'Error while fetching {type} : {i.get("show").get("name")} ({i.get("show").get("id")}) - {r.status_code} - {r.text}',
+            'must_continue': lambda i: get_release_date_object(i) > datetime.datetime.now() - timedelta(
+                days=params.get('newer_than'))
         },
         'releases': {
-            'url': lambda x: f'https://api.spotify.com/v1/artists/{x.get("id")}/albums?{include_groups}&limit=50',
-            'success_callback': releases_api_call_handler,
+            'url': lambda x: [
+                (group, f'https://api.spotify.com/v1/artists/{x.get("id")}/albums?include_groups={group}&limit={params.get("albums_request_limit")}')
+                for group in params.get("include_groups")],
+            'success_callback': lambda x: (x.json(), x.json().get('items')),
             'drop': False,
-            'save_method': save_releases_to_database,
-            'save_method_args': {'type': type, 'element': item},
-            'running_log': lambda n, i,
-                                  t=None: f'{i.get("name")} ({i.get("id")}) : {len(n)}/{t} {type} added to the list',
+            'save_method': None,
+            'running_log': lambda n, i, g,
+                                  t=None: f'{i.get("name")} ({i.get("id")}) : {len(n)}/{t} {type} ({g}) added to the list',
             'error_log': lambda i,
-                                r: f'Error while fetching {type} : {i.get("name")} ({i.get("id")}) - {r.status_code} - {r.text}'
+                                r: f'Error while fetching {type} : {i.get("name")} ({i.get("id")}) - {r.status_code} - {r.text}',
+            'must_continue': lambda i: None if i is None else get_release_date_object(
+                i) > datetime.datetime.now() - timedelta(
+                days=params.get('newer_than'))
         }
     }
 
-    if url is None:
-        url = config.get(type).get('url')(item)
-
-    request = requests.get(url=url, headers={
-        'Authorization': f'Bearer {stored_user_token.get("access_token")}'
-    })
-
-    if request.status_code == 200:
-        response, new_items = config.get(type).get('success_callback')(request)
-
-        items_retrieved = items_retrieved + new_items
-        logging.info(config.get(type).get('running_log')(n=items_retrieved, i=item, t=response.get('total')))
-
-        if response.get('next') is not None:
-            get_from_api(url=response.get('next'), items_retrieved=items_retrieved, type=type, item=item)
-        else:
-            if config.get(type).get('drop'):
-                db_root.drop_table(type)
-
-            config.get(type).get('save_method')(items_retrieved, **config.get(type).get('save_method_args'))
-
-            return items_retrieved
-
-    elif request.status_code == 401 and retry_count < 3:
-        refresh_access_token()
-        get_from_api(url=url, items_retrieved=items_retrieved, retry_count=retry_count + 1, type=type, item=item)
+    if next_url is None:
+        urls = config.get(type).get('url')(item)
     else:
-        logging.error(logging.info(config.get(type).get('error_log')(i=item, r=request)))
+        urls = [(type, next_url)]
+
+    for subgroup, url in urls:
+        request = requests.get(url=url, headers={
+            'Authorization': f'Bearer {stored_user_token.get("access_token")}'
+        })
+
+        if request.status_code == 200:
+            response, new_items = config.get(type).get('success_callback')(request)
+
+            items_retrieved = items_retrieved + new_items
+
+            try:
+                last_item = new_items[-1]
+            except IndexError:
+                last_item = None
+
+            logging.info(config.get(type).get('running_log')(n=new_items, i=item, t=response.get('total'),
+                                                             g=subgroup))
+
+            if response.get('next') is not None and config.get(type).get('must_continue')(last_item):
+                items_retrieved = get_from_api(type=type, next_url=response.get('next'), items_retrieved=items_retrieved, item=item)
+            else:
+                pass
+                if config.get(type).get('drop'):
+                    db_root.drop_table(type)
+
+                if config.get(type).get('save_method') is not None:
+                    config.get(type).get('save_method')(items_retrieved)
+
+        elif request.status_code == 401 and retry_count < 3:
+            refresh_access_token()
+            items_retrieved = get_from_api(type=type, next_url=url, items_retrieved=items_retrieved, retry_count=retry_count + 1,
+                         item=item)
+        elif request.status_code == 429 and retry_count < 3:
+            time.sleep(5)
+            items_retrieved = get_from_api(type=type, next_url=url, items_retrieved=items_retrieved, retry_count=retry_count + 1,
+                         item=item)
+        else:
+            logging.error(logging.info(config.get(type).get('error_log')(i=item, r=request)))
+
+    return items_retrieved
 
 
-def save_releases_to_database(items, type, element=None):
+def get_release_date_object(item):
+    date_format = {
+        'day': '%Y-%m-%d',
+        'month': '%Y-%m',
+        'year': '%Y'
+    }
+
+    return datetime.datetime.strptime(item.get('release_date'),
+                                      date_format.get(item.get('release_date_precision')))
+
+
+def save_releases_to_database(items, type):
     current_date = datetime.datetime.now()
     newer_than_date = current_date - timedelta(days=params.get('newer_than'))
 
     items_to_add = []
 
-    if type == 'episodes':
-        element = element.get('show')
-
     db_root, db = get_databases().get(type)
 
-    for item in items:
-        date_format = {
-            'day': '%Y-%m-%d',
-            'month': '%Y-%m',
-            'year': '%Y'
-        }
+    for item_category in items:
+        for item in item_category:
+            release_date = get_release_date_object(item)
 
-        release_date = datetime.datetime.strptime(item.get('release_date'),
-                                                  date_format.get(item.get('release_date_precision')))
+            if release_date > newer_than_date:
+                item['release_date_timestamp'] = release_date.timestamp()
+                item['added_date_timestamp'] = current_date.timestamp()
 
-        if release_date > newer_than_date:
-            item['release_date_timestamp'] = release_date.timestamp()
-            item['added_date_timestamp'] = current_date.timestamp()
+                if type == 'releases' :
+                    try:
+                        del item['available_markets']
+                    except KeyError:
+                        pass
 
-            try:
-                del item['available_markets']
-            except KeyError:
-                pass
+                q = Query()
 
-            q = Query()
-
-            if not db.search(q.id == item.get('id')):
-                if type == 'releases':
-                    logging.info(
-                        f'{type} : {element.get("name")} ({element.get("id")}) : {item.get("release_date")} - {item.get("total_tracks")} tracks - ({item.get("id")}) {item.get("name")}')
-                elif type == 'episodes':
-                    logging.info(
-                        f'{type} : {element.get("name")} ({element.get("id")}) : {item.get("release_date")} - {item.get("duration_ms")} ms - ({item.get("id")}) {item.get("name")}')
-                items_to_add.append(item)
+                if not db.search(q.id == item.get('id')):
+                    if type == 'releases':
+                        logging.info(
+                            f'{type} : {item.get("release_date")} - {item.get("total_tracks")} tracks - ({item.get("id")}) {item.get("name")}')
+                    elif type == 'episodes':
+                        logging.info(
+                            f'{type} : {item.get("release_date")} - {item.get("duration_ms")} ms - ({item.get("id")}) {item.get("name")}')
+                    items_to_add.append(item)
 
     inserted = db.insert_multiple(items_to_add)
-    logging.info(f'{type} : {element.get("name")} ({element.get("id")}) {len(inserted)} new entries')
+
+    logging.info(f'{type} : {len(inserted)} new entries')
 
 
 def remove_outdated_releases_from_db():
@@ -310,6 +322,8 @@ def perform_search(artists=None, shows=None):
         logging.warning('An analysis is already running')
         return
 
+    remove_outdated_releases_from_db()
+
     if artists is None:
         artists = db_artists.all()
 
@@ -328,27 +342,28 @@ def perform_search(artists=None, shows=None):
         'total_shows': total_shows
     }
 
-    albums_results = []
-    episodes_results = []
-
+    new_releases = []
     for artist in artists:
         current_analysis_status['current_artist'] = current_artist
         current_analysis_status['total_artists'] = total_artists
 
         current_artist = current_artist + 1
-        albums_results.append(get_from_api(type='releases', item=artist))
-
+        new_releases.append(get_from_api(type='releases', item=artist))
         time.sleep(params.get('delay'))
 
+    save_releases_to_database(items=new_releases, type='releases')
+
+    new_episodes = []
     for show in shows:
         current_analysis_status['current_show'] = current_show
         current_analysis_status['total_shows'] = total_shows
 
         current_show = current_show + 1
-        episodes_results.append(get_from_api(type='episodes', item=show))
+        new_episodes.append(get_from_api(type='episodes', item=show))
         time.sleep(params.get('delay'))
 
-    remove_outdated_releases_from_db()
+    save_releases_to_database(items=new_episodes, type='episodes')
+
     current_analysis_status = None
     update_metadata()
 

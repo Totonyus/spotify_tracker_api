@@ -14,7 +14,8 @@ default_params = {
     'log_level': 'INFO',
     'logs_rotation': 7,
 
-    'delay': 1,
+    'albums_request_limit': 5,
+    'delay': 0,
     'newer_than': 30,
     'include_groups': ['album', 'single', 'compilation', 'appears_on'],
 
@@ -25,7 +26,7 @@ default_params = {
 }
 
 params_metadata = {
-    'int': ['newer_than', 'delay', 'listen_port', 'logs_rotation'],
+    'int': ['newer_than', 'delay', 'listen_port', 'albums_request_limit', 'logs_rotation'],
     'array': ['include_groups'],
     'cannot_be_none': ['client_id', 'client_secret', 'application_url']
 }
@@ -51,7 +52,7 @@ class ConfigManager:
                     self.__parameters[option] = self.__app_config.getint(section='app', option=option)
                 except ValueError:
                     self.get_logger().warning(
-                        f'params.ini : Value {option} must be an integer, using default value ({default_params.get(option)}) instead ')
+                        f'params.ini : Value {option} must be an integer, using default value ({default_params.get(option)}) instead')
             elif option in params_metadata.get('array'):
                 self.__parameters[option] = self.__app_config.get(section='app', option=option).split(',')
             else:
