@@ -237,16 +237,18 @@ def get_from_api(type, next_url=None, items_retrieved=[], retry_count=0, item=No
 
         elif request.status_code == 401 and retry_count < 3:
             refresh_access_token()
-            items_retrieved = get_from_api(type=type, next_url=url, items_retrieved=items_retrieved, retry_count=retry_count + 1,
-                         item=item)
+            item, items_retrieved = get_from_api(type=type, next_url=url, items_retrieved=items_retrieved,
+                                                 retry_count=retry_count + 1,
+                                                 item=item)
         elif request.status_code == 429 and retry_count < 3:
             time.sleep(5)
-            items_retrieved = get_from_api(type=type, next_url=url, items_retrieved=items_retrieved, retry_count=retry_count + 1,
-                         item=item)
+            item, items_retrieved = get_from_api(type=type, next_url=url, items_retrieved=items_retrieved,
+                                                 retry_count=retry_count + 1,
+                                                 item=item)
         else:
             logging.error(logging.info(config.get(type).get('error_log')(i=item, r=request)))
 
-    return items_retrieved
+    return item, items_retrieved
 
 
 def get_release_date_object(item):
@@ -268,7 +270,9 @@ def save_releases_to_database(items, type):
 
     db_root, db = get_databases().get(type)
 
-    for item_category in items:
+    for item_category_tuple in items:
+        element, item_category = item_category_tuple
+
         for item in item_category:
             release_date = get_release_date_object(item)
 
@@ -276,7 +280,7 @@ def save_releases_to_database(items, type):
                 item['release_date_timestamp'] = release_date.timestamp()
                 item['added_date_timestamp'] = current_date.timestamp()
 
-                if type == 'releases' :
+                if type == 'releases':
                     try:
                         del item['available_markets']
                     except KeyError:
@@ -287,10 +291,10 @@ def save_releases_to_database(items, type):
                 if not db.search(q.id == item.get('id')):
                     if type == 'releases':
                         logging.info(
-                            f'{type} : {item.get("release_date")} - {item.get("total_tracks")} tracks - ({item.get("id")}) {item.get("name")}')
+                            f'{type} : {element.get("name")} ({element.get("id")}) : {item.get("release_date")} - {item.get("total_tracks")} tracks - ({item.get("id")}) {item.get("name")}')
                     elif type == 'episodes':
                         logging.info(
-                            f'{type} : {item.get("release_date")} - {item.get("duration_ms")} ms - ({item.get("id")}) {item.get("name")}')
+                            f'{type} : {element.get("show").get("name")} ({element.get("show").get("id")}) : {item.get("release_date")} - {item.get("duration_ms")} ms - ({item.get("id")}) {item.get("name")}')
                     items_to_add.append(item)
 
     inserted = db.insert_multiple(items_to_add)
