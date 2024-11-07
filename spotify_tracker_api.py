@@ -198,7 +198,7 @@ async def landing_page(request: Request):
 if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     trigger = CronTrigger.from_crontab(params.get('cron'))
-    scheduler.add_job(api.perform_search, trigger)
+    scheduler.add_job(api.perform_full_search, trigger)
     scheduler.start()
 
     rss_feed_generator.generate_feed()

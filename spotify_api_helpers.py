@@ -319,6 +319,11 @@ current_analysis_status = None
 def get_analysis_status():
     return current_analysis_status
 
+def perform_full_search():
+    get_from_api(type='artists')
+    get_from_api(type='shows')
+
+    perform_search()
 
 def perform_search(artists=None, shows=None):
     global current_analysis_status

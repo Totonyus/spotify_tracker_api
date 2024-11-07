@@ -15,7 +15,6 @@ body {
 .category_title {
     display: block;
     font-weight: bold;
-    font-size: larger;
     text-align: center;
     margin-bottom: 10px;
 }
@@ -49,7 +48,6 @@ body {
 
 .category_number {
     font-weight: bold;
-    font-size: large;
 }
 
 .artists_main_container {
@@ -96,7 +94,6 @@ a {
 
 .releases_number {
     font-weight: bold;
-    font-size: large;
 }
 
 .album_row {
@@ -105,13 +102,25 @@ a {
 
 @media (max-width: 600px) {
     .album_cover {
-        width: 50px;
+        width: 100px;
+    }
+
+    .api_link_reference, .category_number, .releases_number, .album_name, .artist_name, .category_title, .category_item {
+        font-size: xx-large;
+    }
+
+    .album_information, .album_artists, .header, .releases_number, .header > .category_item, .header > .category_title, .header > .category_number {
+        font-size: x-large;
     }
 }
 
 @media (min-width: 600px) {
     .album_cover {
         width: 150px;
+    }
+
+    .header, .api_link_reference, .category_number, .releases_number, .album_name {
+        font-size: large;
     }
 }
 
@@ -136,7 +145,6 @@ hr:last-child {
 
 .album_name {
     font-weight: bold;
-    font-size: large;
 }
 
 .album_information {
@@ -147,7 +155,6 @@ hr:last-child {
     color: deeppink;
     font-weight: bold;
     font-family: monospace;
-    font-size: large;
 }
 
 

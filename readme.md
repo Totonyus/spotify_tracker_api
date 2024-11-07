@@ -1,6 +1,6 @@
 # What is it ?
 
-It's a small (and simple) self-hosted application to extract the latest releases of the artists you follow on spotify. As far as I know there is no such tool that is efficient AND free.
+It's a small (and simple) self-hosted application to extract the latest releases of the artists you follow on spotify. As far as I know there is no such tool that is efficient AND free (nevermind, you can try [this one](https://github.com/jakubito/spotify-release-list)), .
 
 This app is meant to be simple an easy. There is no advanced features that are planned.
 
