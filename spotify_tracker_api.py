@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
 import spotify_api_helpers as api
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -40,12 +40,7 @@ async def auth(response: Response, background_tasks: BackgroundTasks, code, stat
         return RedirectResponse(api.get_authorization_code_url())
     else:
         try:
-            api.get_from_api(type='artists')
-            api.get_from_api(type='shows')
-
-            api.update_metadata()
-
-            background_tasks.add_task(api.perform_search)
+            background_tasks.add_task(api.perform_full_search)
         except PermissionError as e:
             logging.critical(f'Cannot re-authenticate user : {e}')
             return RedirectResponse('/login')
@@ -133,10 +128,7 @@ async def refresh(background_tasks: BackgroundTasks, request: Request):
         if api.get_user_stored_token() is None:
             return RedirectResponse('/login')
 
-        api.get_from_api(type='artists')
-        api.get_from_api(type='shows')
-
-        background_tasks.add_task(api.perform_search)
+        background_tasks.add_task(api.perform_full_search)
     except PermissionError as e:
         logging.critical(e)
         return RedirectResponse('/login')
@@ -156,9 +148,7 @@ async def refresh(background_tasks: BackgroundTasks, request: Request, response:
             response.status_code = 400
             return {'message': 'no user logged'}
 
-        api.get_from_api(type='artists')
-        api.get_from_api(type='shows')
-        background_tasks.add_task(api.perform_search)
+        background_tasks.add_task(api.perform_full_search)
     except PermissionError as e:
         logging.critical(e)
         response.status_code = 400
@@ -183,6 +173,16 @@ def get_all_latest_releases(date=None):
         'episodes': api.get_releases_from_date(date, type='episodes'),
         'metadata': api.get_metadata()
     }
+
+
+@app.websocket("/ws/refresh_status")
+async def websocket_endpoint(websocket: WebSocket):
+    await api.get_ws_manager().connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        api.get_ws_manager().disconnect(websocket)
 
 
 @app.get('/')

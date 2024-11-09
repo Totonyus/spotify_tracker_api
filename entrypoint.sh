@@ -18,7 +18,7 @@ chmod a+x entrypoint.sh
 
 if [ "$DEBUG" == "DEBUG" ]; then
   echo ~~~ Launching DEBUG mode ~~~
-  su "$(id -un $UID)" -c "uvicorn spotify_tracker_api:app --reload --port 8000 --host 0.0.0.0 --reload-include='templates/*.j2' --reload-include='static/*.css'"
+  su "$(id -un $UID)" -c "uvicorn spotify_tracker_api:app --reload --port 8000 --host 0.0.0.0 --reload-include='templates/*.j2' --reload-include='static/*.css' --reload-include='static/*.js'"
 else
   su "$(id -un $UID)" -c "python3 spotify_tracker_api.py"
 fi

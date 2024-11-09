@@ -3,6 +3,8 @@
     <title>Spotify Tracker</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" type="image/png" href="/static/favicon.ico"/>
+
+    <script src="/static/engine.js"></script>
 </head>
 
 <body>
@@ -45,17 +47,17 @@
                 <span>try to <a class="api_link_reference" href="/login">/login</a> again</span></span>
         {% endif %}
 
-        {% if metadata == None %}
-            <span class="category_item warning"><span>No analysis performed yet</span> ➤
+        <span id="refresh_status">
+        {% if metadata == None and status == None %}
+        <span class="category_item warning"><span>No analysis performed yet</span> ➤
                 <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
-        {% else %}
-            {% if status == None %}
-                <span class="category_item {{ 'error' if outdated }}"><span>Last scan : {{ metadata.last_execution }} </span> ➤
+        {% elif status == None %}
+            <span class="category_item"><span>Last scan : {{ metadata.last_execution }} </span> ➤
                     <span><a class="api_link_reference" href="/refresh">/refresh</a></span></span>
-            {% else %}
-                <span class="category_item"><span>Running scan</span> ➤ <span>{{ status.get('current_artist') + status.get('current_show') }} on {{ status.get('total_artists') + status.get('total_shows') }}</span></span>
-            {% endif %}
+        {% else %}
+            <span class="category_item"><span>Running scan</span> ➤ <span>{{ status.get('current_artist') + status.get('current_show') }} on {{ status.get('total_artists') + status.get('total_shows') }}</span></span>
         {% endif %}
+        </span>
 
         <span class="category_item"><span>Need help ? </span>➤
             <span><a class="api_link_reference" href="https://github.com/Totonyus/spotify_tracker_api">github</a></span></span>

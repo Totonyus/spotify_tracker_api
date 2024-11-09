@@ -16,6 +16,7 @@ services:
       - ./test/data:/app/data
       - ./spotify_tracker_api.py:/app/spotify_tracker_api.py
       - ./spotify_api_helpers.py:/app/spotify_api_helpers.py
+      - ./ws_manager.py:/app/ws_manager.py
       - ./rss_feed_generator.py:/app/rss_feed_generator.py
       - ./params_utils.py:/app/params_utils.py
       - ./templates/artists.html.j2:/app/templates/artists.html.j2
@@ -24,6 +25,7 @@ services:
       - ./templates/episodes.html.j2:/app/templates/episodes.html.j2
       - ./templates/landing_page.html.j2:/app/templates/landing_page.html.j2
       - ./static/style.css:/app/static/style.css
+      - ./static/engine.js:/app/static/engine.js
       - ./entrypoint.sh:/app/entrypoint.sh
       - /etc/localtime:/etc/localtime:ro
     environment:

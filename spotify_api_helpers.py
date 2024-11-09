@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import datetime
 import time
@@ -8,8 +9,9 @@ import requests
 from requests import Request
 from tinydb import TinyDB, Query
 
-import rss_feed_generator
 import params_utils
+import rss_feed_generator
+from ws_manager import ConnectionManager
 
 db_root_users = TinyDB('data/database_users.json')
 db_users = db_root_users.table('users', cache_size=0)
@@ -30,6 +32,7 @@ client_secret = params.get('client_secret')
 authorization = f'Basic {base64.b64encode((f"{client_id}:{client_secret}").encode("ascii")).decode("ascii")}'
 
 logging = params.get_logger()
+ws_manager = ConnectionManager()
 
 
 def get_authorization_code_url():
@@ -329,8 +332,9 @@ def perform_full_search():
 
     perform_search()
 
-
 def perform_search(artists=None, shows=None):
+    loop = asyncio.new_event_loop()
+
     global current_analysis_status
     if get_analysis_status() is not None:
         logging.warning('An analysis is already running')
@@ -344,17 +348,20 @@ def perform_search(artists=None, shows=None):
     if shows is None:
         shows = db_shows.all()
 
-    current_artist = 0
-    current_show = 0
+    current_artist = 1
+    current_show = 1
     total_artists = len(artists)
     total_shows = len(shows)
 
     current_analysis_status = {
+        'scan_running' : True,
         'current_artist': current_artist,
         'total_artists': total_artists,
         'current_show': current_show,
         'total_shows': total_shows
     }
+
+    loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
 
     new_releases = []
     for artist in artists:
@@ -363,6 +370,8 @@ def perform_search(artists=None, shows=None):
 
         current_artist = current_artist + 1
         new_releases.append(get_from_api(type='releases', item=artist))
+
+        loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
         time.sleep(params.get('delay'))
 
     save_releases_to_database(items=new_releases, type='releases')
@@ -374,14 +383,19 @@ def perform_search(artists=None, shows=None):
 
         current_show = current_show + 1
         new_episodes.append(get_from_api(type='episodes', item=show))
+
+        loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
         time.sleep(params.get('delay'))
 
     save_releases_to_database(items=new_episodes, type='episodes')
 
-    current_analysis_status = None
     update_metadata()
 
     rss_feed_generator.generate_feed()
+
+    current_analysis_status['scan_running'] = False
+    loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
+    current_analysis_status = None
 
 
 def get_artists():
@@ -452,3 +466,6 @@ def get_shows():
 
 def get_episodes():
     return db_episodes.all()
+
+def get_ws_manager():
+    return ws_manager
