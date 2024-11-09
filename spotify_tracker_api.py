@@ -95,7 +95,7 @@ async def episodes():
 
 
 @app.get('/episodes')
-async def episodes(request: Request, sort_by='release_date_timestamp', reverse_sort='true'):
+async def episodes(request: Request, sort_by=api.get_parameters().get("default_sorting"), reverse_sort='true'):
     return templates.TemplateResponse(name="episodes.html.j2", request=request,
                                       context={'episodes': api.get_episodes(),
                                                'metadata': api.get_metadata(),
@@ -114,7 +114,7 @@ async def releases():
 
 
 @app.get('/releases')
-async def releases(request: Request, sort_by='release_date_timestamp', reverse_sort='true'):
+async def releases(request: Request, sort_by=api.get_parameters().get("default_sorting"), reverse_sort='true'):
     return templates.TemplateResponse(name="releases.html.j2", request=request,
                                       context={'artists': api.get_artists(),
                                                'releases': api.get_releases(),
@@ -148,12 +148,13 @@ async def refresh(background_tasks: BackgroundTasks, request: Request):
 
     return RedirectResponse(referer)
 
+
 @app.get('/api/refresh')
-async def refresh(background_tasks: BackgroundTasks, request: Request, response:Response):
+async def refresh(background_tasks: BackgroundTasks, request: Request, response: Response):
     try:
         if api.get_user_stored_token() is None:
             response.status_code = 400
-            return {'message' : 'no user logged'}
+            return {'message': 'no user logged'}
 
         api.get_from_api(type='artists')
         api.get_from_api(type='shows')
@@ -161,9 +162,10 @@ async def refresh(background_tasks: BackgroundTasks, request: Request, response:
     except PermissionError as e:
         logging.critical(e)
         response.status_code = 400
-        return {'message' : str(e)}
+        return {'message': str(e)}
 
     return None
+
 
 @app.get('/api/latest')
 async def from_fate(date=None):

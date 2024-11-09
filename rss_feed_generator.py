@@ -22,7 +22,7 @@ def generate_feed():
             description=f'New {item.get("album_group")} with {item.get("total_tracks")} tracks. Featuring {", ".join(artists_str)}.',
             author='Spotify tracker api',
             guid=Guid(f'release_{item.get("id")}'),
-            pubDate=datetime.fromtimestamp(item.get('release_date_timestamp'))
+            pubDate=datetime.fromtimestamp(item.get(api.get_parameters().get("default_sorting")))
         ))
 
     episodes = api.get_episodes()
@@ -33,12 +33,12 @@ def generate_feed():
             description=f'New episode of {round(item.get("duration_ms") / 1000 / 60)} minutes. Description : {item.get("description")}',
             author='Spotify tracker api',
             guid=Guid(f'episode_{item.get("id")}'),
-            pubDate=datetime.fromtimestamp(item.get('release_date_timestamp'))
+            pubDate=datetime.fromtimestamp(item.get(api.get_parameters().get("default_sorting")))
         ))
 
     feed = Feed(
         title="Spotify Tracker",
-        link=f'api.get_parameters().get("application_url")/static/feed',
+        link=f'{api.get_parameters().get("application_url")}/static/feed',
         description='The rss feed to follow your artists and podcasts releases',
         language='en-US',
         lastBuildDate=datetime.now(),

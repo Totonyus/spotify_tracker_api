@@ -174,7 +174,8 @@ def get_from_api(type, next_url=None, items_retrieved=[], retry_count=0, item=No
         },
         'episodes': {
             'url': lambda x: [
-                ('episode', f'https://api.spotify.com/v1/shows/{x.get("show").get("id")}/episodes?limit={params.get("albums_request_limit")}')],
+                ('episode',
+                 f'https://api.spotify.com/v1/shows/{x.get("show").get("id")}/episodes?limit={params.get("albums_request_limit")}')],
             'success_callback': lambda x: (x.json(), x.json().get('items')),
             'drop': False,
             'save_method': None,
@@ -187,7 +188,8 @@ def get_from_api(type, next_url=None, items_retrieved=[], retry_count=0, item=No
         },
         'releases': {
             'url': lambda x: [
-                (group, f'https://api.spotify.com/v1/artists/{x.get("id")}/albums?include_groups={group}&limit={params.get("albums_request_limit")}')
+                (group,
+                 f'https://api.spotify.com/v1/artists/{x.get("id")}/albums?include_groups={group}&limit={params.get("albums_request_limit")}')
                 for group in params.get("include_groups")],
             'success_callback': lambda x: (x.json(), x.json().get('items')),
             'drop': False,
@@ -226,7 +228,8 @@ def get_from_api(type, next_url=None, items_retrieved=[], retry_count=0, item=No
                                                              g=subgroup))
 
             if response.get('next') is not None and config.get(type).get('must_continue')(last_item):
-                items_retrieved = get_from_api(type=type, next_url=response.get('next'), items_retrieved=items_retrieved, item=item)
+                items_retrieved = get_from_api(type=type, next_url=response.get('next'),
+                                               items_retrieved=items_retrieved, item=item)
             else:
                 pass
                 if config.get(type).get('drop'):
@@ -319,11 +322,13 @@ current_analysis_status = None
 def get_analysis_status():
     return current_analysis_status
 
+
 def perform_full_search():
     get_from_api(type='artists')
     get_from_api(type='shows')
 
     perform_search()
+
 
 def perform_search(artists=None, shows=None):
     global current_analysis_status
@@ -417,7 +422,13 @@ def get_releases_from_date(date, type):
     db_root, db = get_databases().get(type)
 
     q = Query()
-    return db.search((q.release_date_timestamp >= start_date) & (q.release_date_timestamp <= end_date))
+
+    if get_parameters().get("default_sorting") == 'added_date_timestamp':
+        reference_date = q.added_date_timestamp
+    else:
+        reference_date = q.release_date_timestamp
+
+    return db.search((reference_date >= start_date) & (reference_date <= end_date))
 
 
 def get_parameters():
