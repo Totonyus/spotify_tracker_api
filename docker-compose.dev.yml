@@ -16,6 +16,7 @@ services:
       - ./test/data:/app/data
       - ./spotify_tracker_api.py:/app/spotify_tracker_api.py
       - ./spotify_api_helpers.py:/app/spotify_api_helpers.py
+      - ./logger_utils.py:/app/logger_utils.py
       - ./ws_manager.py:/app/ws_manager.py
       - ./rss_feed_generator.py:/app/rss_feed_generator.py
       - ./params_utils.py:/app/params_utils.py

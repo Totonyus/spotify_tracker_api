@@ -15,8 +15,14 @@
 </head>
 
 <body>
+<span id="burger_menu" class="hidden_big_screen"><img src="/static/menu.svg"/></span>
+<span class="menu hidden" id="menu" data-nb_artists="{{ metadata.nb_artists | default(0) }}"
+      data-nb_releases="{{ metadata.nb_releases | default(0) }}"
+      data-nb_shows="{{ metadata.nb_shows | default(0) }}"
+      data-nb_episodes="{{ metadata.nb_episodes | default(0) }}">
+</span>
+
 <span class="header">
-    <span class="category_number">{{ artists | length }} artists</span>
     <span id="refresh_status">
     {% if metadata == None and status == None %}
         <span class="category_item warning"><span>No analysis performed yet</span> ➤

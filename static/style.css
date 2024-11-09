@@ -102,7 +102,7 @@ a {
 
 @media (max-width: 1000px) {
     .album_cover {
-        width: 100px;
+        width: 150px;
     }
 
     .api_link_reference, .category_number, .releases_number, .album_name, .artist_name, .category_title, .category_item {
@@ -111,6 +111,29 @@ a {
 
     .album_information, .album_artists, .header, .releases_number, .header > .category_item, .header > .category_title, .header > .category_number {
         font-size: x-large;
+    }
+
+    #burger_menu {
+        display: block;
+        justify-self: center;
+
+    }
+
+    span.menu {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .hidden{
+        display: none !important;
+    }
+
+    .hidden_big_screen{
+        display: block;
+    }
+
+    .menu{
+        justify-self: center;
     }
 }
 
@@ -122,6 +145,23 @@ a {
     .header, .api_link_reference, .category_number, .releases_number, .album_name {
         font-size: large;
     }
+
+    #burger_menu {
+        display: none;
+    }
+
+    span.menu {
+        display: flex;
+        justify-content: space-around;
+    }
+
+    .hidden_big_screen{
+        display: none;
+    }
+}
+
+#burger_menu > img{
+    width: 75px;
 }
 
 .album_cover_col {
