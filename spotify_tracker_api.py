@@ -158,20 +158,23 @@ async def refresh(background_tasks: BackgroundTasks, request: Request, response:
 
 
 @app.get('/api/latest')
-async def from_fate(date=None):
-    return get_all_latest_releases(date)
+async def from_date(date=None, default_sorting=None):
+    return get_all_latest_releases(date=date, default_sorting=default_sorting)
 
-
-def get_all_latest_releases(date=None):
+def get_all_latest_releases(date=None, default_sorting=None):
     if date is None:
         date = datetime.now()
     else:
         date = datetime.strptime(date, '%Y-%m-%d')
 
+    if default_sorting not in params.get_metadata().get('fixed_values').get('default_sorting'):
+        default_sorting = params.get('default_sorting')
+
     return {
-        'releases': api.get_releases_from_date(date, type='releases'),
-        'episodes': api.get_releases_from_date(date, type='episodes'),
-        'metadata': api.get_metadata()
+        'releases': api.get_releases_from_date(date, type='releases', default_sorting=default_sorting),
+        'episodes': api.get_releases_from_date(date, type='episodes', default_sorting=default_sorting),
+        'metadata': api.get_metadata(),
+        'default_sorting' : default_sorting
     }
 
 

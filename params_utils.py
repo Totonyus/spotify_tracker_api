@@ -96,3 +96,11 @@ class ConfigManager:
 
     def get_logger(self):
         return self.__log
+
+    @staticmethod
+    def get_metadata():
+        return params_metadata
+
+    @staticmethod
+    def get_defaults():
+        return default_params

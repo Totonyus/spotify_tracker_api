@@ -332,6 +332,7 @@ def perform_full_search():
 
     perform_search()
 
+
 def perform_search(artists=None, shows=None):
     loop = asyncio.new_event_loop()
 
@@ -354,7 +355,7 @@ def perform_search(artists=None, shows=None):
     total_shows = len(shows)
 
     current_analysis_status = {
-        'scan_running' : True,
+        'scan_running': True,
         'current_artist': current_artist,
         'total_artists': total_artists,
         'current_show': current_show,
@@ -429,7 +430,7 @@ def update_metadata():
     db_metadata.insert(metadata_object)
 
 
-def get_releases_from_date(date, type):
+def get_releases_from_date(date, type, default_sorting=None):
     start_date = date.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     end_date = date.replace(hour=23, minute=59, second=59, microsecond=0).timestamp()
 
@@ -437,7 +438,7 @@ def get_releases_from_date(date, type):
 
     q = Query()
 
-    if get_parameters().get("default_sorting") == 'added_date_timestamp':
+    if default_sorting == 'added_date_timestamp' or default_sorting is None:
         reference_date = q.added_date_timestamp
     else:
         reference_date = q.release_date_timestamp
@@ -466,6 +467,7 @@ def get_shows():
 
 def get_episodes():
     return db_episodes.all()
+
 
 def get_ws_manager():
     return ws_manager
