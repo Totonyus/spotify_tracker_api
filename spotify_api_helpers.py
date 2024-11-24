@@ -279,7 +279,7 @@ def save_releases_to_database(items, type):
     for item_category_tuple in items:
         element, item_category = item_category_tuple
 
-        for item in item_category:
+        for item in [i for i in item_category if i is not None]:
             release_date = get_release_date_object(item)
 
             if release_date > newer_than_date:
