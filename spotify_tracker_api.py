@@ -142,13 +142,24 @@ async def refresh(background_tasks: BackgroundTasks, request: Request):
 
 
 @app.get('/api/refresh')
-async def refresh(background_tasks: BackgroundTasks, request: Request, response: Response):
+async def refresh(background_tasks: BackgroundTasks, request: Request, response: Response, type=None):
+
+    try:
+        accepted_types = ['episodes', 'releases']
+        type = type.lower()
+        if type not in accepted_types:
+            logging.error(f'Requested type not in {accepted_types}, (value found = {type}). Fallback to default behavior')
+            type = None
+            response.status_code = 202
+    except AttributeError as e:
+        type = None
+
     try:
         if api.get_user_stored_token() is None:
             response.status_code = 400
             return {'message': 'no user logged'}
 
-        background_tasks.add_task(api.perform_full_search)
+        background_tasks.add_task(api.perform_full_search, type=type)
     except PermissionError as e:
         logging.critical(e)
         response.status_code = 400
@@ -174,7 +185,7 @@ def get_all_latest_releases(date=None, default_sorting=None):
         'releases': api.get_releases_from_date(date, type='releases', default_sorting=default_sorting),
         'episodes': api.get_releases_from_date(date, type='episodes', default_sorting=default_sorting),
         'metadata': api.get_metadata(),
-        'default_sorting' : default_sorting
+        'default_sorting': default_sorting
     }
 
 

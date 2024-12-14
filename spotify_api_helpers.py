@@ -286,11 +286,10 @@ def save_releases_to_database(items, type):
                 item['release_date_timestamp'] = release_date.timestamp()
                 item['added_date_timestamp'] = current_date.timestamp()
 
-                if type == 'releases':
-                    try:
-                        del item['available_markets']
-                    except KeyError:
-                        pass
+                try:
+                    del item['available_markets']
+                except KeyError:
+                    pass
 
                 q = Query()
 
@@ -326,14 +325,14 @@ def get_analysis_status():
     return current_analysis_status
 
 
-def perform_full_search():
+def perform_full_search(type=None):
     get_from_api(type='artists')
     get_from_api(type='shows')
 
-    perform_search()
+    perform_search(type=type)
 
 
-def perform_search(artists=None, shows=None):
+def perform_search(artists=None, shows=None, type=None):
     loop = asyncio.new_event_loop()
 
     global current_analysis_status
@@ -364,31 +363,33 @@ def perform_search(artists=None, shows=None):
 
     loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
 
-    new_releases = []
-    for artist in artists:
-        current_analysis_status['current_artist'] = current_artist
-        current_analysis_status['total_artists'] = total_artists
+    if type is None or type == 'releases' :
+        new_releases = []
+        for artist in artists:
+            current_analysis_status['current_artist'] = current_artist
+            current_analysis_status['total_artists'] = total_artists
 
-        current_artist = current_artist + 1
-        new_releases.append(get_from_api(type='releases', item=artist))
+            current_artist = current_artist + 1
+            new_releases.append(get_from_api(type='releases', item=artist))
 
-        loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
-        time.sleep(params.get('delay'))
+            loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
+            time.sleep(params.get('delay'))
 
-    save_releases_to_database(items=new_releases, type='releases')
+        save_releases_to_database(items=new_releases, type='releases')
 
-    new_episodes = []
-    for show in shows:
-        current_analysis_status['current_show'] = current_show
-        current_analysis_status['total_shows'] = total_shows
+    if type is None or type == 'episodes' :
+        new_episodes = []
+        for show in shows:
+            current_analysis_status['current_show'] = current_show
+            current_analysis_status['total_shows'] = total_shows
 
-        current_show = current_show + 1
-        new_episodes.append(get_from_api(type='episodes', item=show))
+            current_show = current_show + 1
+            new_episodes.append(get_from_api(type='episodes', item=show))
 
-        loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
-        time.sleep(params.get('delay'))
+            loop.run_until_complete(ws_manager.broadcast(current_analysis_status))
+            time.sleep(params.get('delay'))
 
-    save_releases_to_database(items=new_episodes, type='episodes')
+        save_releases_to_database(items=new_episodes, type='episodes')
 
     update_metadata()
 

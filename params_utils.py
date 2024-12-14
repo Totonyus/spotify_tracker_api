@@ -75,7 +75,7 @@ class ConfigManager:
                     self.__parameters.get(param) is not None and self.__parameters.get(
                 param) not in params_metadata.get('fixed_values').get(param)):
                 self.get_logger().error(
-                    f'params.ini : {param} must be on those values : {params_metadata.get('fixed_values').get(param)}, found "{self.__parameters.get(param)}", fallback to default value : {default_params.get(param)}')
+                    f'params.ini : {param} must be on those values : {params_metadata.get("fixed_values").get(param)}, found "{self.__parameters.get(param)}", fallback to default value : {default_params.get(param)}')
                 self.__parameters[param] = default_params.get(param)
 
         try:
