@@ -231,7 +231,7 @@ def get_from_api(type, next_url=None, items_retrieved=[], retry_count=0, item=No
                                                              g=subgroup))
 
             if response.get('next') is not None and config.get(type).get('must_continue')(last_item):
-                items_retrieved = get_from_api(type=type, next_url=response.get('next'),
+                items, items_retrieved = get_from_api(type=type, next_url=response.get('next'),
                                                items_retrieved=items_retrieved, item=item)
             else:
                 pass
