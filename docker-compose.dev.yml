@@ -25,6 +25,7 @@ services:
       - ./templates/shows.html.j2:/app/templates/shows.html.j2
       - ./templates/episodes.html.j2:/app/templates/episodes.html.j2
       - ./templates/landing_page.html.j2:/app/templates/landing_page.html.j2
+      - ./templates/rss_feed.xml.j2:/app/templates/rss_feed.xml.j2
       - ./static/style.css:/app/static/style.css
       - ./static/engine.js:/app/static/engine.js
       - ./entrypoint.sh:/app/entrypoint.sh
