@@ -13,7 +13,7 @@
                    type="application/rss+xml"/>
         <link>{{ api.get_parameters().get("application_url") }}</link>
         <description>The rss feed to follow your artists and podcasts releases</description>
-        <lastBuildDate>datetime.now()</lastBuildDate>
+        <lastBuildDate>{{ datetime.now() }}</lastBuildDate>
         <language>en-US</language>
         <image>
             <url>{{ api.get_parameters().get("application_url") }}/static/favicon.ico</url>
