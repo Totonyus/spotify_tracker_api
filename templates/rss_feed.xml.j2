@@ -36,8 +36,8 @@
                 </description>
                 <content:encoded>
                     <![CDATA[
-                    <p>New {{ item.get("album_group") }} with {{ item.get("total_tracks") }} tracks. Featuring {{ artists }}.</p>
                     </p><img decoding="async" src="{{ item.get('images')[1].get('url') | default('') }}"/></p>
+                    <p>New {{ item.get("album_group") }} with {{ item.get("total_tracks") }} tracks. Featuring {{ artists }}.</p>
                     ]]>
                 </content:encoded>
             </item>
@@ -55,8 +55,8 @@
                 </description>
                 <content:encoded>
                     <![CDATA[
-                    <p>New episode of {{ (item.get("duration_ms") / 1000 / 60) | round(0) | int }} minutes. Description : {{ item.get("description") }}</p>
                     <p><img decoding="async" src="{{ item.get('images')[1].get('url') | default('') }}"/></p>
+                    <p>New episode of {{ (item.get("duration_ms") / 1000 / 60) | round(0) | int }} minutes. Description : {{ item.get("description") }}</p>
                     ]]>
                 </content:encoded>
             </item>
