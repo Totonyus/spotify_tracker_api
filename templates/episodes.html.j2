@@ -47,7 +47,7 @@
     <span class='album_row'>
         <span class='album_cover_col'>
             <a target="_blank" href="{{ episode.external_urls.spotify }}">
-                <img alt="{{ episode.name }}" class='album_cover' src='{{ episode.images[1].url }}'/>
+                <img alt="{{ episode.name }}" class='album_cover' src="{{ episode.images[1].url if episode.images[1] else 'static/default_image.png' }}"/>
             </a>
         </span>
         <span class='album_info_col'>

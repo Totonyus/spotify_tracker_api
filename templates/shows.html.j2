@@ -47,7 +47,7 @@
     <span class="artist_card">
         <a target="_blank" href="{{ show.show.external_urls.spotify }}">
             <span class="image_container">
-                <img class="artist_image" src="{{ show.show.images[1].url }}" alt="{{ show.show.name }}"/>
+                <img class="artist_image" src="{{ show.images[1].url if show.images[1] else 'static/default_image.png' }}" alt="{{ show.show.name }}"/>
             </span>
         </a>
     <span class="artist_name">{{ show.show.name }} <a class="search_icon" target="_blank"
