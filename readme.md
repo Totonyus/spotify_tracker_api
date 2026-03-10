@@ -1,3 +1,7 @@
+# Important notice
+
+Since 9th march 2026, a premium account is mandatory for API usage : https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security 
+
 # What is it ?
 
 It's a small (and simple) self-hosted application to extract the latest releases of the artists you follow on spotify. As far as I know there is no such tool that is efficient AND free (nevermind, you can try [this one](https://github.com/jakubito/spotify-release-list)), .

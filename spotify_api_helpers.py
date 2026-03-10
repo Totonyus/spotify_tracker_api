@@ -252,7 +252,7 @@ def get_from_api(type, next_url=None, items_retrieved=[], retry_count=0, item=No
                                                  retry_count=retry_count + 1,
                                                  item=item)
         else:
-            logging.error(logging.info(config.get(type).get('error_log')(i=item, r=request)))
+            logging.error(config.get(type).get('error_log')(i=item, r=request))
 
     return item, items_retrieved
 
